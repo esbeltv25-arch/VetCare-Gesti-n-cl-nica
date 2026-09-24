@@ -1,5 +1,6 @@
 'use client'
 
+// Modal de videollamada de telemedicina: video grid + controles + chat en tiempo real
 import { useState, useEffect, useRef } from 'react'
 import {
   Mic,

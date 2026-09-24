@@ -1,5 +1,6 @@
 'use client'
 
+// Portal del cliente: login mock, dashboard de mascotas, cartillas de vacunación y acceso a telemedicina
 import { useState, useMemo } from 'react'
 import {
   Stethoscope,
