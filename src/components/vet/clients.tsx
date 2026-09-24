@@ -7,28 +7,16 @@ import {
   Phone,
   Mail,
   MapPin,
-  Calendar,
   Heart,
   Award,
-  Clock,
-  X,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
-import {
-  clients,
-  pets,
-  invoices,
-  getClient,
-  getPetsByClient,
-  getInvoicesByClient,
-  formatDate,
-  formatCurrency,
-} from '@/lib/vet-data'
+import { useClients, usePets, useInvoices } from '@/lib/vet-hooks'
+import { formatDate, formatCurrency } from '@/lib/vet-data'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +25,9 @@ import {
 } from '@/components/ui/dialog'
 
 export function ClientsView() {
+  const { data: clients = [], isLoading } = useClients()
+  const { data: pets = [] } = usePets()
+  const { data: invoices = [] } = useInvoices()
   const [search, setSearch] = useState('')
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
 
@@ -46,9 +37,7 @@ export function ClientsView() {
       c.email.toLowerCase().includes(search.toLowerCase()) ||
       c.phone.includes(search)
     )
-  }, [search])
-
-  const selectedClient = selectedClientId ? clients.find(c => c.id === selectedClientId) : null
+  }, [clients, search])
 
   return (
     <div>
@@ -69,77 +58,99 @@ export function ClientsView() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(client => {
-            const clientPets = getPetsByClient(client.id)
-            const totalSpent = getInvoicesByClient(client.id)
-              .filter(i => i.status === 'Pagada')
-              .reduce((sum, i) => sum + i.total, 0)
-            return (
-              <Card
-                key={client.id}
-                className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
-                onClick={() => setSelectedClientId(client.id)}
-              >
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-semibold', client.avatarColor)}>
-                      {client.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => <Card key={i}><CardContent className="h-48 bg-muted animate-pulse" /></Card>)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map(client => {
+              const clientPets = pets.filter(p => p.clientId === client.id)
+              const clientInvoices = invoices.filter(i => i.clientId === client.id)
+              const totalSpent = clientInvoices.filter(i => i.status === 'Pagada').reduce((sum, i) => sum + i.total, 0)
+              return (
+                <Card
+                  key={client.id}
+                  className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
+                  onClick={() => setSelectedClientId(client.id)}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-3">
+                      <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-semibold', client.avatarColor)}>
+                        {client.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{client.name}</h3>
+                        <p className="text-[12px] text-muted-foreground">Desde {formatDate(client.since)}</p>
+                      </div>
+                      {client.loyaltyPoints > 300 && <Award className="h-4 w-4 text-amber-500 shrink-0" />}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{client.name}</h3>
-                      <p className="text-[12px] text-muted-foreground">Desde {formatDate(client.since)}</p>
-                    </div>
-                    {client.loyaltyPoints > 300 && (
-                      <Award className="h-4 w-4 text-amber-500 shrink-0" />
-                    )}
-                  </div>
 
-                  <div className="mt-4 space-y-1.5 text-[12px]">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{client.phone}</span>
+                    <div className="mt-4 space-y-1.5 text-[12px]">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{client.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{client.email}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{client.email}</span>
-                    </div>
-                  </div>
 
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3">
-                    <div>
-                      <p className="text-[10px] uppercase text-muted-foreground">Mascotas</p>
-                      <p className="text-sm font-semibold text-foreground">{clientPets.length}</p>
+                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3">
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground">Mascotas</p>
+                        <p className="text-sm font-semibold text-foreground">{clientPets.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground">Puntos</p>
+                        <p className="text-sm font-semibold text-amber-600">{client.loyaltyPoints}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground">Gastado</p>
+                        <p className="text-sm font-semibold text-emerald-600">{formatCurrency(totalSpent)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[10px] uppercase text-muted-foreground">Puntos</p>
-                      <p className="text-sm font-semibold text-amber-600">{client.loyaltyPoints}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase text-muted-foreground">Gastado</p>
-                      <p className="text-sm font-semibold text-emerald-600">{formatCurrency(totalSpent)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
 
-      <Dialog open={!!selectedClient} onOpenChange={open => !open && setSelectedClientId(null)}>
+      <Dialog open={!!selectedClientId} onOpenChange={open => !open && setSelectedClientId(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedClient && <ClientDetail clientId={selectedClient.id} />}
+          {selectedClientId && (
+            <ClientDetail
+              clientId={selectedClientId}
+              pets={pets}
+              invoices={invoices}
+              clients={clients}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-function ClientDetail({ clientId }: { clientId: string }) {
-  const client = getClient(clientId)!
-  const clientPets = getPetsByClient(clientId)
-  const clientInvoices = getInvoicesByClient(clientId)
+function ClientDetail({
+  clientId,
+  pets,
+  invoices,
+  clients,
+}: {
+  clientId: string
+  pets: any[]
+  invoices: any[]
+  clients: any[]
+}) {
+  const client = clients.find(c => c.id === clientId)
+  const clientPets = pets.filter(p => p.clientId === clientId)
+  const clientInvoices = invoices.filter(i => i.clientId === clientId)
+
+  if (!client) return null
 
   return (
     <div>
@@ -156,7 +167,6 @@ function ClientDetail({ clientId }: { clientId: string }) {
       </DialogHeader>
 
       <div className="space-y-5 pt-4">
-        {/* Contact */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-lg border border-border p-3">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -181,7 +191,6 @@ function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         </div>
 
-        {/* Pets */}
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
             <Dog className="h-4 w-4 text-emerald-600" /> Mascotas ({clientPets.length})
@@ -200,7 +209,6 @@ function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         </div>
 
-        {/* Invoices summary */}
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
             <Heart className="h-4 w-4 text-rose-500" /> Facturas ({clientInvoices.length})
@@ -218,9 +226,7 @@ function ClientDetail({ clientId }: { clientId: string }) {
               <tbody>
                 {clientInvoices.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-3 py-4 text-center text-muted-foreground">
-                      Sin facturas
-                    </td>
+                    <td colSpan={4} className="px-3 py-4 text-center text-muted-foreground">Sin facturas</td>
                   </tr>
                 ) : (
                   clientInvoices.map(inv => (
@@ -229,15 +235,12 @@ function ClientDetail({ clientId }: { clientId: string }) {
                       <td className="px-3 py-2 text-[12px]">{formatDate(inv.date)}</td>
                       <td className="px-3 py-2 text-right font-medium">{formatCurrency(inv.total)}</td>
                       <td className="px-3 py-2 text-right">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-[10px]',
-                            inv.status === 'Pagada' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                            inv.status === 'Pendiente' && 'bg-amber-50 text-amber-700 border-amber-200',
-                            inv.status === 'Vencida' && 'bg-rose-50 text-rose-700 border-rose-200',
-                          )}
-                        >
+                        <Badge variant="outline" className={cn(
+                          'text-[10px]',
+                          inv.status === 'Pagada' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                          inv.status === 'Pendiente' && 'bg-amber-50 text-amber-700 border-amber-200',
+                          inv.status === 'Vencida' && 'bg-rose-50 text-rose-700 border-rose-200',
+                        )}>
                           {inv.status}
                         </Badge>
                       </td>
@@ -249,7 +252,6 @@ function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         </div>
 
-        {/* Loyalty */}
         <div className="rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Award className="h-5 w-5 text-amber-500" />

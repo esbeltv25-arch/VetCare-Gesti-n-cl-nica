@@ -11,14 +11,14 @@ import {
   ShieldCheck,
   Award,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
-import { vets } from '@/lib/vet-data'
+import { useVets } from '@/lib/vet-hooks'
 
 const ROLE_FILTERS = ['Todos', 'Veterinario', 'Recepción', 'Peluquería', 'Administrador', 'Auxiliar'] as const
 
@@ -37,6 +37,7 @@ const SHIFT_STYLES: Record<string, string> = {
 }
 
 export function StaffView() {
+  const { data: vets = [], isLoading } = useVets()
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<typeof ROLE_FILTERS[number]>('Todos')
 
@@ -49,41 +50,17 @@ export function StaffView() {
       const matchesRole = roleFilter === 'Todos' || v.role === roleFilter
       return matchesSearch && matchesRole
     })
-  }, [search, roleFilter])
+  }, [vets, search, roleFilter])
 
   const activeCount = vets.filter(v => v.active).length
   const totalAppointmentsToday = vets.reduce((sum, v) => sum + v.appointmentsToday, 0)
-  const avgRating = (vets.reduce((sum, v) => sum + v.rating, 0) / vets.length).toFixed(1)
+  const avgRating = vets.length ? (vets.reduce((sum, v) => sum + v.rating, 0) / vets.length).toFixed(1) : '0'
 
   const stats = [
-    {
-      label: 'Equipo activo',
-      value: `${activeCount}/${vets.length}`,
-      icon: ShieldCheck,
-      color: 'emerald',
-      desc: 'Personal disponible',
-    },
-    {
-      label: 'Citas hoy',
-      value: totalAppointmentsToday,
-      icon: Calendar,
-      color: 'sky',
-      desc: 'Total agenda',
-    },
-    {
-      label: 'Rating medio',
-      value: `${avgRating} ★`,
-      icon: Star,
-      color: 'amber',
-      desc: 'Valoración clientes',
-    },
-    {
-      label: 'Especialidades',
-      value: new Set(vets.filter(v => v.role === 'Veterinario').map(v => v.specialty)).size,
-      icon: Award,
-      color: 'violet',
-      desc: 'Áreas cubiertas',
-    },
+    { label: 'Equipo activo', value: `${activeCount}/${vets.length}`, icon: ShieldCheck, color: 'emerald', desc: 'Personal disponible' },
+    { label: 'Citas hoy', value: totalAppointmentsToday, icon: Calendar, color: 'sky', desc: 'Total agenda' },
+    { label: 'Rating medio', value: `${avgRating} ★`, icon: Star, color: 'amber', desc: 'Valoración clientes' },
+    { label: 'Especialidades', value: new Set(vets.filter(v => v.role === 'Veterinario').map(v => v.specialty)).size, icon: Award, color: 'violet', desc: 'Áreas cubiertas' },
   ]
 
   const statStyles: Record<string, string> = {
@@ -93,12 +70,22 @@ export function StaffView() {
     violet: 'bg-violet-50 text-violet-700 ring-violet-200',
   }
 
+  if (isLoading) {
+    return (
+      <div>
+        <Topbar title="Personal" subtitle="Cargando..." />
+        <div className="p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="h-32 bg-muted animate-pulse" /></Card>)}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <Topbar title="Personal" subtitle="Equipo de la clínica" actionLabel="Nuevo empleado" />
 
       <div className="p-6 space-y-4">
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map(stat => {
             const Icon = stat.icon
@@ -119,7 +106,6 @@ export function StaffView() {
           })}
         </div>
 
-        {/* Filters */}
         <Card>
           <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
             <div className="relative flex-1">
@@ -137,10 +123,7 @@ export function StaffView() {
                   key={r}
                   size="sm"
                   variant={roleFilter === r ? 'default' : 'outline'}
-                  className={cn(
-                    'h-8',
-                    roleFilter === r && 'bg-emerald-600 hover:bg-emerald-700'
-                  )}
+                  className={cn('h-8', roleFilter === r && 'bg-emerald-600 hover:bg-emerald-700')}
                   onClick={() => setRoleFilter(r)}
                 >
                   {r}
@@ -150,14 +133,12 @@ export function StaffView() {
           </CardContent>
         </Card>
 
-        {/* Staff grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(vet => {
             const initials = vet.name.split(' ').map(n => n[0]).slice(0, 2).join('')
             return (
               <Card key={vet.id} className="overflow-hidden">
                 <CardContent className="p-5">
-                  {/* Header */}
                   <div className="flex items-start gap-3">
                     <Avatar className="h-14 w-14 border-2 border-emerald-100">
                       <AvatarFallback className={cn('text-base font-semibold', vet.avatarColor)}>
@@ -178,7 +159,6 @@ export function StaffView() {
                     )}
                   </div>
 
-                  {/* Contact */}
                   <div className="mt-4 space-y-1.5 text-[12px]">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Phone className="h-3.5 w-3.5 shrink-0" />
@@ -197,7 +177,6 @@ export function StaffView() {
                     </div>
                   </div>
 
-                  {/* Footer */}
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
                     <div>
                       <div className="flex items-center gap-1 mb-0.5">

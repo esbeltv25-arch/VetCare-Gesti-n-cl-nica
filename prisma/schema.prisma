@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,12 +18,113 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Client {
+  id            String    @id
+  name          String
+  phone         String
+  email         String
+  address       String
+  since         DateTime
+  loyaltyPoints Int       @default(0)
+  avatarColor   String
+  pets          Pet[]
+  invoices      Invoice[]
+  appointments  Appointment[]
+}
+
+model Pet {
+  id                String      @id
+  name              String
+  species           String
+  breed             String
+  birthDate         DateTime
+  weight            Float
+  sex               String
+  microchip         String      @default("")
+  sterilized        Boolean     @default(false)
+  photoUrl          String
+  allergies         String      @default("[]")
+  chronicConditions String      @default("[]")
+  status            String      @default("Sano")
+  lastVisit         DateTime?
+  client            Client      @relation(fields: [clientId], references: [id])
+  clientId          String
+  vaccines          Vaccine[]
+  appointments      Appointment[]
+  invoices          Invoice[]
+}
+
+model Vaccine {
+  id      String   @id @default(cuid())
+  name    String
+  date    DateTime
+  nextDue DateTime?
+  pet     Pet      @relation(fields: [petId], references: [id])
+  petId   String
+}
+
+model Vet {
+  id                String       @id
+  name              String
+  role              String
+  specialty         String
+  phone             String
+  email             String
+  shift             String
+  active            Boolean       @default(true)
+  appointmentsToday Int          @default(0)
+  rating            Float         @default(0)
+  avatarColor       String
+  appointments      Appointment[]
+}
+
+model Appointment {
+  id       String   @id @default(cuid())
+  date     String
+  time     String
+  duration Int
+  reason   String
+  type     String
+  status   String   @default("Pendiente")
+  pet      Pet      @relation(fields: [petId], references: [id])
+  petId    String
+  client   Client   @relation(fields: [clientId], references: [id])
+  clientId String
+  vet      Vet      @relation(fields: [vetId], references: [id])
+  vetId    String
+}
+
+model InventoryItem {
+  id         String  @id
+  name       String
+  category   String
+  stock      Int
+  minStock   Int
+  unit       String
+  expiryDate String?
+  supplier   String
+  price      Float
+  lot        String
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  number        String        @unique
+  date          String
+  status        String        @default("Pendiente")
+  paymentMethod String?
+  client        Client        @relation(fields: [clientId], references: [id])
+  clientId      String
+  pet           Pet           @relation(fields: [petId], references: [id])
+  petId         String
+  items         InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  description String
+  qty         Int
+  unitPrice   Float
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  invoiceId   String
 }

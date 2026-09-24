@@ -10,29 +10,31 @@ import {
   Clock,
   Activity,
   ArrowUpRight,
-  Syringe,
   PackageX,
 } from 'lucide-react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Area,
+  AreaChart,
+} from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Topbar } from '@/components/vet/topbar'
-import {
-  appointments,
-  pets,
-  clients,
-  inventory,
-  invoices,
-  vets,
-  getPet,
-  getClient,
-  getVet,
-  formatCurrency,
-  formatDate,
-  daysUntil,
-} from '@/lib/vet-data'
+import { cn } from '@/lib/utils'
+import { useDashboard, usePets, useClients } from '@/lib/vet-hooks'
+import { formatCurrency, formatDate, daysUntil } from '@/lib/vet-data'
 import type { ModuleKey } from '@/app/page'
 
 interface DashboardProps {
@@ -55,47 +57,49 @@ const TYPE_ICONS: Record<string, string> = {
   'Peluquería': '✂️',
 }
 
+const SPECIES_PIE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#0ea5e9', '#ec4899']
+
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const today = new Date().toISOString().split('T')[0]
-  const todaysAppointments = appointments
-    .filter(a => a.date === today)
-    .sort((a, b) => a.time.localeCompare(b.time))
+  const { data, isLoading } = useDashboard()
+  const { data: pets } = usePets()
+  const { data: clients } = useClients()
 
-  const monthlyRevenue = invoices
-    .filter(i => i.status === 'Pagada')
-    .reduce((sum, i) => sum + i.total, 0)
+  if (isLoading || !data) {
+    return (
+      <div>
+        <Topbar title="Dashboard" subtitle="Resumen general de la clínica" actionLabel="Nueva cita" onAction={() => onNavigate('appointments')} />
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32" />)}
+        </div>
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="lg:col-span-2 h-96" />
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    )
+  }
 
-  const pendingInvoices = invoices.filter(i => i.status === 'Pendiente').length
-  const overdueInvoices = invoices.filter(i => i.status === 'Vencida').length
-
-  const lowStock = inventory.filter(i => i.stock <= i.minStock)
-  const expiringSoon = inventory.filter(
-    i => i.expiryDate && daysUntil(i.expiryDate) <= 90 && daysUntil(i.expiryDate) > 0
-  )
-
-  const criticalPets = pets.filter(p => p.status === 'Crítico' || p.status === 'En tratamiento')
-  const activeVets = vets.filter(v => v.active && v.role === 'Veterinario')
-
-  const kpis = [
+  const kpis = data.kpis
+  const kpiData = [
     {
       label: 'Pacientes activos',
-      value: pets.length,
-      change: '+2 este mes',
+      value: kpis.pets,
+      change: pets && pets.length > 8 ? `+${pets.length - 8} este mes` : 'Estable',
       icon: Dog,
       color: 'emerald',
       onClick: () => onNavigate('patients'),
     },
     {
       label: 'Citas hoy',
-      value: todaysAppointments.length,
-      change: `${todaysAppointments.filter(a => a.status === 'Confirmada').length} confirmadas`,
+      value: kpis.todaysAppointmentsCount,
+      change: `${kpis.confirmedToday} confirmadas`,
       icon: Calendar,
       color: 'sky',
       onClick: () => onNavigate('appointments'),
     },
     {
       label: 'Ingresos del mes',
-      value: formatCurrency(monthlyRevenue),
+      value: formatCurrency(kpis.paidRevenue),
       change: '+12% vs mes anterior',
       icon: DollarSign,
       color: 'amber',
@@ -103,8 +107,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     },
     {
       label: 'Clientes',
-      value: clients.length,
-      change: '+1 esta semana',
+      value: kpis.clients,
+      change: clients && clients.length > 6 ? `+${clients.length - 6} esta semana` : 'Estable',
       icon: Users,
       color: 'violet',
       onClick: () => onNavigate('clients'),
@@ -118,19 +122,18 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     violet: 'bg-violet-50 text-violet-700 ring-violet-200',
   }
 
+  // Datos para gráficos
+  const speciesData = Object.entries(data.speciesDistribution).map(([name, value]) => ({ name, value }))
+  const criticalPetsData = (pets || []).filter(p => p.status !== 'Sano').map(p => ({ name: p.name, status: p.status, breed: p.breed }))
+
   return (
     <div>
-      <Topbar
-        title="Dashboard"
-        subtitle="Resumen general de la clínica"
-        actionLabel="Nueva cita"
-        onAction={() => onNavigate('appointments')}
-      />
+      <Topbar title="Dashboard" subtitle="Resumen general de la clínica" actionLabel="Nueva cita" onAction={() => onNavigate('appointments')} />
 
       <div className="p-6 space-y-6">
         {/* KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map(kpi => {
+          {kpiData.map(kpi => {
             const Icon = kpi.icon
             return (
               <Card
@@ -164,7 +167,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <div>
                 <CardTitle className="text-base">Agenda de hoy</CardTitle>
                 <CardDescription className="text-xs">
-                  {todaysAppointments.length} citas programadas
+                  {data.todaysAppointments.length} citas programadas
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={() => onNavigate('appointments')}>
@@ -173,50 +176,45 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="max-h-[420px] overflow-y-auto pr-1 space-y-2">
-                {todaysAppointments.length === 0 && (
+                {data.todaysAppointments.length === 0 && (
                   <div className="text-center py-8 text-sm text-muted-foreground">
                     No hay citas para hoy
                   </div>
                 )}
-                {todaysAppointments.map(apt => {
-                  const pet = getPet(apt.petId)
-                  const client = getClient(apt.clientId)
-                  const vet = getVet(apt.vetId)
-                  return (
-                    <div
-                      key={apt.id}
-                      className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50"
-                    >
-                      <div className="flex flex-col items-center justify-center w-14 shrink-0 rounded-lg bg-emerald-50 py-1.5 text-emerald-700">
-                        <span className="text-[10px] font-medium uppercase">Hora</span>
-                        <span className="text-sm font-bold">{apt.time}</span>
-                      </div>
-                      <div className="text-2xl">{TYPE_ICONS[apt.type]}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium text-foreground">
-                            {pet?.name} <span className="text-muted-foreground font-normal">· {pet?.breed}</span>
-                          </p>
-                        </div>
-                        <p className="truncate text-[12px] text-muted-foreground">
-                          {client?.name} · {apt.reason}
+                {data.todaysAppointments.map(apt => (
+                  <div
+                    key={apt.id}
+                    className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex flex-col items-center justify-center w-14 shrink-0 rounded-lg bg-emerald-50 py-1.5 text-emerald-700">
+                      <span className="text-[10px] font-medium uppercase">Hora</span>
+                      <span className="text-sm font-bold">{apt.time}</span>
+                    </div>
+                    <div className="text-2xl">{TYPE_ICONS[apt.type]}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {apt.pet?.name} <span className="text-muted-foreground font-normal">· {apt.pet?.breed}</span>
                         </p>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <Badge
-                          variant={apt.status === 'Confirmada' ? 'default' : 'secondary'}
-                          className={cn(
-                            'text-[10px]',
-                            apt.status === 'Confirmada' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                          )}
-                        >
-                          {apt.status}
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground">{vet?.name.split(' ').slice(-1)[0]}</span>
-                      </div>
+                      <p className="truncate text-[12px] text-muted-foreground">
+                        {apt.client?.name} · {apt.reason}
+                      </p>
                     </div>
-                  )
-                })}
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge
+                        variant={apt.status === 'Confirmada' ? 'default' : 'secondary'}
+                        className={cn(
+                          'text-[10px]',
+                          apt.status === 'Confirmada' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                        )}
+                      >
+                        {apt.status}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground">{apt.vet?.name.split(' ').slice(-1)[0]}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -231,18 +229,17 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <CardDescription className="text-xs">Requieren atención</CardDescription>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              {/* Low stock */}
-              {lowStock.length > 0 && (
+              {data.lowStock.length > 0 && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <PackageX className="h-4 w-4 text-rose-600" />
                     <p className="text-[12px] font-semibold text-rose-700">Stock bajo</p>
                     <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
-                      {lowStock.length}
+                      {data.lowStock.length}
                     </Badge>
                   </div>
                   <ul className="space-y-1">
-                    {lowStock.slice(0, 3).map(item => (
+                    {data.lowStock.slice(0, 3).map(item => (
                       <li key={item.id} className="flex items-center justify-between text-[11px] text-rose-800">
                         <span className="truncate pr-2">{item.name}</span>
                         <span className="font-medium shrink-0">{item.stock}/{item.minStock}</span>
@@ -252,18 +249,17 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 </div>
               )}
 
-              {/* Expiring soon */}
-              {expiringSoon.length > 0 && (
+              {data.expiringSoon.length > 0 && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-amber-600" />
                     <p className="text-[12px] font-semibold text-amber-700">Próximas a vencer</p>
                     <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px] bg-amber-100 text-amber-700">
-                      {expiringSoon.length}
+                      {data.expiringSoon.length}
                     </Badge>
                   </div>
                   <ul className="space-y-1">
-                    {expiringSoon.slice(0, 3).map(item => (
+                    {data.expiringSoon.slice(0, 3).map(item => (
                       <li key={item.id} className="flex items-center justify-between text-[11px] text-amber-800">
                         <span className="truncate pr-2">{item.name}</span>
                         <span className="font-medium shrink-0">{formatDate(item.expiryDate!)}</span>
@@ -273,27 +269,26 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 </div>
               )}
 
-              {/* Pending invoices */}
-              {(pendingInvoices > 0 || overdueInvoices > 0) && (
+              {(data.pendingInvoices > 0 || data.overdueInvoices > 0) && (
                 <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <DollarSign className="h-4 w-4 text-sky-600" />
                     <p className="text-[12px] font-semibold text-sky-700">Facturas</p>
                   </div>
                   <div className="space-y-1.5 text-[11px]">
-                    {pendingInvoices > 0 && (
+                    {data.pendingInvoices > 0 && (
                       <div className="flex justify-between text-sky-800">
                         <span>Pendientes de cobro</span>
                         <Badge className="bg-sky-200 text-sky-800 hover:bg-sky-200 h-5 px-1.5 text-[10px]">
-                          {pendingInvoices}
+                          {data.pendingInvoices}
                         </Badge>
                       </div>
                     )}
-                    {overdueInvoices > 0 && (
+                    {data.overdueInvoices > 0 && (
                       <div className="flex justify-between text-rose-800">
                         <span>Vencidas</span>
                         <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
-                          {overdueInvoices}
+                          {data.overdueInvoices}
                         </Badge>
                       </div>
                     )}
@@ -301,20 +296,19 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 </div>
               )}
 
-              {/* Critical patients */}
-              {criticalPets.length > 0 && (
+              {criticalPetsData.length > 0 && (
                 <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Activity className="h-4 w-4 text-violet-600" />
                     <p className="text-[12px] font-semibold text-violet-700">Pacientes a seguimiento</p>
                   </div>
                   <ul className="space-y-1">
-                    {criticalPets.slice(0, 3).map(pet => (
-                      <li key={pet.id} className="flex items-center justify-between text-[11px] text-violet-800">
+                    {criticalPetsData.slice(0, 3).map(pet => (
+                      <li key={pet.name} className="flex items-center justify-between text-[11px] text-violet-800">
                         <span className="truncate pr-2">{pet.name} · {pet.breed}</span>
                         <Badge
                           variant="outline"
-          className={cn('h-5 px-1.5 text-[10px] capitalize border', STATUS_COLORS[pet.status])}
+                          className={cn('h-5 px-1.5 text-[10px] capitalize border', STATUS_COLORS[pet.status])}
                         >
                           {pet.status}
                         </Badge>
@@ -327,9 +321,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </Card>
         </div>
 
-        {/* Bottom row */}
+        {/* Charts row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Income chart placeholder - bar chart of last 6 months */}
+          {/* Ingresos mensuales - Area chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -344,19 +338,103 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <MonthlyRevenueChart />
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.monthlyRevenue}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                      formatter={(v: number) => formatCurrency(v)}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      fill="url(#colorRevenue)"
+                      dot={{ r: 4, fill: '#10b981' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Veterinarians performance */}
+          {/* Distribución por especie - Pie chart */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Por especie</CardTitle>
+              <CardDescription className="text-xs">Distribución de pacientes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={speciesData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={70}
+                      label={(entry: any) => `${entry.name}: ${entry.value}`}
+                      labelLine={false}
+                    >
+                      {speciesData.map((_, i) => (
+                        <Cell key={i} fill={SPECIES_PIE_COLORS[i % SPECIES_PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom row: Citas por día + Veterinarios */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Citas por día de la semana - Bar chart */}
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Citas por día de la semana</CardTitle>
+              <CardDescription className="text-xs">Distribución semanal</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.appointmentsByWeekday}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                      formatter={(v: number) => [`${v} citas`, 'Citas']}
+                    />
+                    <Bar dataKey="citas" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Veterinarios performance */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Actividad del equipo</CardTitle>
               <CardDescription className="text-xs">Citas hoy por veterinario</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {activeVets.map(vet => {
-                const max = Math.max(...activeVets.map(v => v.appointmentsToday)) || 1
+              {data.activeVets.map(vet => {
+                const max = Math.max(...data.activeVets.map(v => v.appointmentsToday)) || 1
                 const pct = (vet.appointmentsToday / max) * 100
                 return (
                   <div key={vet.id}>
@@ -375,46 +453,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function MonthlyRevenueChart() {
-  const months = [
-    { label: 'Abr', value: 4200 },
-    { label: 'May', value: 4800 },
-    { label: 'Jun', value: 5100 },
-    { label: 'Jul', value: 4600 },
-    { label: 'Ago', value: 5900 },
-    { label: 'Sep', value: 6500 },
-  ]
-  const max = Math.max(...months.map(m => m.value))
-  return (
-    <div className="space-y-3">
-      <div className="flex items-end justify-between gap-3 h-44 px-2">
-        {months.map(m => {
-          const h = (m.value / max) * 100
-          const isLast = m.label === 'Sep'
-          return (
-            <div key={m.label} className="flex flex-1 flex-col items-center gap-2">
-              <div className="w-full h-full flex items-end">
-                <div
-                  className={cn(
-                    'w-full rounded-t-md transition-all',
-                    isLast ? 'bg-emerald-500' : 'bg-emerald-200'
-                  )}
-                  style={{ height: `${h}%` }}
-                />
-              </div>
-              <span className="text-[11px] font-medium text-muted-foreground">{m.label}</span>
-            </div>
-          )
-        })}
-      </div>
-      <div className="flex items-center justify-between border-t border-border pt-3">
-        <span className="text-[12px] text-muted-foreground">Total acumulado: <strong className="text-foreground">{formatCurrency(31100)}</strong></span>
-        <span className="text-[12px] text-muted-foreground">Promedio mensual: <strong className="text-foreground">{formatCurrency(5183)}</strong></span>
       </div>
     </div>
   )

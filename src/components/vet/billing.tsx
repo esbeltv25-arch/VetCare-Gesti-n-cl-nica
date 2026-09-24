@@ -14,20 +14,14 @@ import {
   Check,
   X,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
-import {
-  invoices,
-  getClient,
-  getPet,
-  getInvoicesByClient,
-  formatCurrency,
-  formatDate,
-} from '@/lib/vet-data'
+import { useInvoices, useClients, usePets } from '@/lib/vet-hooks'
+import { formatCurrency, formatDate } from '@/lib/vet-data'
 import {
   Dialog,
   DialogContent,
@@ -50,14 +44,17 @@ const PAYMENT_ICONS: Record<string, any> = {
 }
 
 export function BillingView() {
+  const { data: invoices = [], isLoading } = useInvoices()
+  const { data: clients = [] } = useClients()
+  const { data: pets = [] } = usePets()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_FILTERS[number]>('Todos')
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     return invoices.filter(inv => {
-      const client = getClient(inv.clientId)
-      const pet = getPet(inv.petId)
+      const client = clients.find(c => c.id === inv.clientId)
+      const pet = pets.find(p => p.id === inv.petId)
       const matchesSearch =
         inv.number.toLowerCase().includes(search.toLowerCase()) ||
         client?.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -65,7 +62,7 @@ export function BillingView() {
       const matchesStatus = statusFilter === 'Todos' || inv.status === statusFilter
       return matchesSearch && matchesStatus
     })
-  }, [search, statusFilter])
+  }, [invoices, clients, pets, search, statusFilter])
 
   const totalPaid = invoices.filter(i => i.status === 'Pagada').reduce((sum, i) => sum + i.total, 0)
   const totalPending = invoices.filter(i => i.status === 'Pendiente').reduce((sum, i) => sum + i.total, 0)
@@ -73,34 +70,10 @@ export function BillingView() {
   const totalRevenue = totalPaid + totalPending + totalOverdue
 
   const stats = [
-    {
-      label: 'Ingresos totales',
-      value: formatCurrency(totalRevenue),
-      icon: DollarSign,
-      color: 'emerald',
-      desc: 'Histórico acumulado',
-    },
-    {
-      label: 'Cobrado',
-      value: formatCurrency(totalPaid),
-      icon: TrendingUp,
-      color: 'sky',
-      desc: 'Facturas pagadas',
-    },
-    {
-      label: 'Pendiente de cobro',
-      value: formatCurrency(totalPending),
-      icon: Clock,
-      color: 'amber',
-      desc: 'Por cobrar',
-    },
-    {
-      label: 'Vencido',
-      value: formatCurrency(totalOverdue),
-      icon: AlertCircle,
-      color: 'rose',
-      desc: 'Requiere gestión',
-    },
+    { label: 'Ingresos totales', value: formatCurrency(totalRevenue), icon: DollarSign, color: 'emerald', desc: 'Histórico acumulado' },
+    { label: 'Cobrado', value: formatCurrency(totalPaid), icon: TrendingUp, color: 'sky', desc: 'Facturas pagadas' },
+    { label: 'Pendiente de cobro', value: formatCurrency(totalPending), icon: Clock, color: 'amber', desc: 'Por cobrar' },
+    { label: 'Vencido', value: formatCurrency(totalOverdue), icon: AlertCircle, color: 'rose', desc: 'Requiere gestión' },
   ]
 
   const statStyles: Record<string, string> = {
@@ -110,14 +83,22 @@ export function BillingView() {
     rose: 'bg-rose-50 text-rose-700 ring-rose-200',
   }
 
-  const selectedInvoice = selectedInvoiceId ? invoices.find(i => i.id === selectedInvoiceId) : null
+  if (isLoading) {
+    return (
+      <div>
+        <Topbar title="Facturación" subtitle="Cargando..." />
+        <div className="p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="h-32 bg-muted animate-pulse" /></Card>)}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
       <Topbar title="Facturación" subtitle="Gestión de facturas y cobros" actionLabel="Nueva factura" />
 
       <div className="p-6 space-y-4">
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map(stat => {
             const Icon = stat.icon
@@ -138,7 +119,6 @@ export function BillingView() {
           })}
         </div>
 
-        {/* Filters */}
         <Card>
           <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
             <div className="relative flex-1">
@@ -156,10 +136,7 @@ export function BillingView() {
                   key={s}
                   size="sm"
                   variant={statusFilter === s ? 'default' : 'outline'}
-                  className={cn(
-                    'h-8',
-                    statusFilter === s && 'bg-emerald-600 hover:bg-emerald-700'
-                  )}
+                  className={cn('h-8', statusFilter === s && 'bg-emerald-600 hover:bg-emerald-700')}
                   onClick={() => setStatusFilter(s)}
                 >
                   {s}
@@ -169,7 +146,6 @@ export function BillingView() {
           </CardContent>
         </Card>
 
-        {/* Invoices table */}
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -195,8 +171,8 @@ export function BillingView() {
                     </tr>
                   ) : (
                     filtered.map(inv => {
-                      const client = getClient(inv.clientId)
-                      const pet = getPet(inv.petId)
+                      const client = clients.find(c => c.id === inv.clientId)
+                      const pet = pets.find(p => p.id === inv.petId)
                       const PayIcon = inv.paymentMethod ? PAYMENT_ICONS[inv.paymentMethod] : null
                       return (
                         <tr
@@ -204,19 +180,13 @@ export function BillingView() {
                           className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
                           onClick={() => setSelectedInvoiceId(inv.id)}
                         >
-                          <td className="px-4 py-3 font-mono text-[12px] font-medium text-foreground">
-                            {inv.number}
-                          </td>
+                          <td className="px-4 py-3 font-mono text-[12px] font-medium text-foreground">{inv.number}</td>
                           <td className="px-4 py-3">
                             <p className="font-medium text-foreground truncate">{client?.name}</p>
                             <p className="text-[11px] text-muted-foreground">{inv.items.length} ítems</p>
                           </td>
-                          <td className="px-4 py-3 hidden md:table-cell text-[12px] text-muted-foreground">
-                            {pet?.name}
-                          </td>
-                          <td className="px-4 py-3 hidden sm:table-cell text-[12px] text-muted-foreground">
-                            {formatDate(inv.date)}
-                          </td>
+                          <td className="px-4 py-3 hidden md:table-cell text-[12px] text-muted-foreground">{pet?.name}</td>
+                          <td className="px-4 py-3 hidden sm:table-cell text-[12px] text-muted-foreground">{formatDate(inv.date)}</td>
                           <td className="px-4 py-3 hidden lg:table-cell">
                             {inv.paymentMethod && PayIcon ? (
                               <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
@@ -246,20 +216,27 @@ export function BillingView() {
         </Card>
       </div>
 
-      {/* Invoice detail dialog */}
-      <Dialog open={!!selectedInvoice} onOpenChange={open => !open && setSelectedInvoiceId(null)}>
+      <Dialog open={!!selectedInvoiceId} onOpenChange={open => !open && setSelectedInvoiceId(null)}>
         <DialogContent className="max-w-lg">
-          {selectedInvoice && <InvoiceDetail invoiceId={selectedInvoice.id} />}
+          {selectedInvoiceId && (
+            <InvoiceDetail
+              invoiceId={selectedInvoiceId}
+              invoices={invoices}
+              clients={clients}
+              pets={pets}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
-  const inv = invoices.find(i => i.id === invoiceId)!
-  const client = getClient(inv.clientId)
-  const pet = getPet(inv.petId)
+function InvoiceDetail({ invoiceId, invoices, clients, pets }: { invoiceId: string; invoices: any[]; clients: any[]; pets: any[] }) {
+  const inv = invoices.find(i => i.id === invoiceId)
+  if (!inv) return null
+  const client = clients.find(c => c.id === inv.clientId)
+  const pet = pets.find(p => p.id === inv.petId)
   const PayIcon = inv.paymentMethod ? PAYMENT_ICONS[inv.paymentMethod] : null
 
   return (
@@ -277,32 +254,26 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
       </DialogHeader>
 
       <div className="space-y-4 pt-4">
-        {/* Client info */}
         <div className="rounded-lg bg-muted/30 p-3">
           <div className="flex items-center gap-3">
             <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold', client?.avatarColor)}>
-              {client?.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+              {client?.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-foreground truncate">{client?.name}</p>
-              <p className="text-[12px] text-muted-foreground">
-                Paciente: {pet?.name} · {pet?.breed}
-              </p>
+              <p className="text-[12px] text-muted-foreground">Paciente: {pet?.name} · {pet?.breed}</p>
             </div>
           </div>
         </div>
 
-        {/* Items */}
         <div>
           <p className="text-[12px] font-medium uppercase text-muted-foreground mb-2">Detalle</p>
           <div className="space-y-1.5">
-            {inv.items.map((item, idx) => (
+            {inv.items.map((item: any, idx: number) => (
               <div key={idx} className="flex items-start justify-between gap-3 rounded-md border border-border p-2.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] text-foreground">{item.description}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {item.qty} × {formatCurrency(item.unitPrice)}
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">{item.qty} × {formatCurrency(item.unitPrice)}</p>
                 </div>
                 <p className="text-[13px] font-medium text-foreground shrink-0">
                   {formatCurrency(item.qty * item.unitPrice)}
@@ -312,7 +283,6 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           </div>
         </div>
 
-        {/* Total */}
         <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-emerald-700">Total</span>
@@ -326,7 +296,6 @@ function InvoiceDetail({ invoiceId }: { invoiceId: string }) {
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2">
           {inv.status !== 'Pagada' && (
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700">

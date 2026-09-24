@@ -10,14 +10,15 @@ import {
   DollarSign,
   PackageX,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
-import { inventory, formatCurrency, formatDate, daysUntil } from '@/lib/vet-data'
+import { useInventory } from '@/lib/vet-hooks'
+import { formatCurrency, formatDate, daysUntil } from '@/lib/vet-data'
 
 const CATEGORIES = ['Todos', 'Medicamento', 'Alimento', 'Insumo médico', 'Accesorio', 'Higiene'] as const
 
@@ -30,6 +31,7 @@ const CATEGORY_STYLES: Record<string, string> = {
 }
 
 export function InventoryView() {
+  const { data: inventory = [], isLoading } = useInventory()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<typeof CATEGORIES[number]>('Todos')
   const [showLowStockOnly, setShowLowStockOnly] = useState(false)
@@ -43,43 +45,22 @@ export function InventoryView() {
       const matchesLowStock = !showLowStockOnly || item.stock <= item.minStock
       return matchesSearch && matchesCategory && matchesLowStock
     })
-  }, [search, category, showLowStockOnly])
+  }, [inventory, search, category, showLowStockOnly])
 
   const totalValue = inventory.reduce((sum, i) => sum + i.stock * i.price, 0)
   const lowStockCount = inventory.filter(i => i.stock <= i.minStock).length
   const expiringCount = inventory.filter(
-    i => i.expiryDate && daysUntil(i.expiryDate) <= 90
+    i => i.expiryDate && daysUntil(i.expiryDate) <= 90 && daysUntil(i.expiryDate) > 0
   ).length
   const expiredCount = inventory.filter(
     i => i.expiryDate && daysUntil(i.expiryDate) < 0
   ).length
 
   const stats = [
-    {
-      label: 'Productos totales',
-      value: inventory.length,
-      icon: Package,
-      color: 'emerald',
-    },
-    {
-      label: 'Valor del stock',
-      value: formatCurrency(totalValue),
-      icon: DollarSign,
-      color: 'amber',
-    },
-    {
-      label: 'Stock bajo',
-      value: lowStockCount,
-      icon: TrendingDown,
-      color: 'rose',
-      action: () => setShowLowStockOnly(true),
-    },
-    {
-      label: 'Por vencer (90d)',
-      value: expiringCount,
-      icon: Clock,
-      color: 'orange',
-    },
+    { label: 'Productos totales', value: inventory.length, icon: Package, color: 'emerald' },
+    { label: 'Valor del stock', value: formatCurrency(totalValue), icon: DollarSign, color: 'amber' },
+    { label: 'Stock bajo', value: lowStockCount, icon: TrendingDown, color: 'rose', action: () => setShowLowStockOnly(true) },
+    { label: 'Por vencer (90d)', value: expiringCount, icon: Clock, color: 'orange' },
   ]
 
   const statStyles: Record<string, string> = {
@@ -89,12 +70,22 @@ export function InventoryView() {
     orange: 'bg-orange-50 text-orange-700 ring-orange-200',
   }
 
+  if (isLoading) {
+    return (
+      <div>
+        <Topbar title="Inventario" subtitle="Cargando..." />
+        <div className="p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Card key={i}><CardContent className="h-32 bg-muted animate-pulse" /></Card>)}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <Topbar title="Inventario" subtitle="Control de stock, medicamentos y suministros" actionLabel="Nuevo producto" />
 
       <div className="p-6 space-y-4">
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map(stat => {
             const Icon = stat.icon
@@ -116,20 +107,18 @@ export function InventoryView() {
           })}
         </div>
 
-        {/* Expired alert */}
         {expiredCount > 0 && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 flex items-center gap-3">
             <PackageX className="h-5 w-5 text-rose-600" />
             <div className="flex-1">
               <p className="text-sm font-medium text-rose-700">
-                {expiredCount} producto(s) vencido(s) detectedo(s)
+                {expiredCount} producto(s) vencido(s) detectado(s)
               </p>
               <p className="text-[12px] text-rose-600">Revisa y retira del stock</p>
             </div>
           </div>
         )}
 
-        {/* Filters */}
         <Card>
           <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
             <div className="relative flex-1">
@@ -156,10 +145,7 @@ export function InventoryView() {
                   key={c}
                   size="sm"
                   variant={category === c ? 'default' : 'outline'}
-                  className={cn(
-                    'h-8',
-                    category === c && 'bg-emerald-600 hover:bg-emerald-700'
-                  )}
+                  className={cn('h-8', category === c && 'bg-emerald-600 hover:bg-emerald-700')}
                   onClick={() => setCategory(c)}
                 >
                   {c}
@@ -169,7 +155,6 @@ export function InventoryView() {
           </CardContent>
         </Card>
 
-        {/* Table */}
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -223,10 +208,7 @@ export function InventoryView() {
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="inline-block min-w-[60px]">
-                              <p className={cn(
-                                'font-semibold',
-                                isLow ? 'text-rose-600' : 'text-foreground'
-                              )}>
+                              <p className={cn('font-semibold', isLow ? 'text-rose-600' : 'text-foreground')}>
                                 {item.stock}
                               </p>
                               <Progress

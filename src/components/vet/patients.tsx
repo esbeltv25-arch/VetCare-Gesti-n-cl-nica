@@ -12,7 +12,6 @@ import {
   Syringe,
   Calendar,
   AlertCircle,
-  X,
   Mail,
   Phone,
   MapPin,
@@ -24,7 +23,7 @@ import {
   Activity,
   Pill,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,18 +35,9 @@ import {
 } from '@/components/ui/dialog'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
-import {
-  pets,
-  clients,
-  appointments,
-  getClient,
-  getVet,
-  getAppointmentsByPet,
-  calculateAge,
-  formatDate,
-  formatCurrency,
-  daysUntil,
-} from '@/lib/vet-data'
+import { usePets, useClients, useAppointments } from '@/lib/vet-hooks'
+import type { Pet, Client, Appointment } from '@/lib/vet-data'
+import { calculateAge, formatDate, daysUntil } from '@/lib/vet-data'
 
 const STATUS_STYLES: Record<string, string> = {
   'Sano': 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -67,6 +57,8 @@ const SPECIES_FILTERS = ['Todos', 'Perro', 'Gato', 'Conejo', 'Ave'] as const
 const STATUS_FILTERS = ['Todos', 'Sano', 'En tratamiento', 'Crítico', 'En observación'] as const
 
 export function PatientsView() {
+  const { data: pets = [], isLoading } = usePets()
+  const { data: clients = [] } = useClients()
   const [search, setSearch] = useState('')
   const [speciesFilter, setSpeciesFilter] = useState<typeof SPECIES_FILTERS[number]>('Todos')
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_FILTERS[number]>('Todos')
@@ -81,20 +73,28 @@ export function PatientsView() {
       const matchesStatus = statusFilter === 'Todos' || p.status === statusFilter
       return matchesSearch && matchesSpecies && matchesStatus
     })
-  }, [search, speciesFilter, statusFilter])
+  }, [pets, search, speciesFilter, statusFilter])
 
   const selectedPet = selectedPetId ? pets.find(p => p.id === selectedPetId) : null
 
+  if (isLoading) {
+    return (
+      <div>
+        <Topbar title="Pacientes" subtitle="Cargando..." />
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i}><CardContent className="aspect-square bg-muted animate-pulse" /></Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <Topbar
-        title="Pacientes"
-        subtitle={`${pets.length} mascotas registradas`}
-        actionLabel="Nuevo paciente"
-      />
+      <Topbar title="Pacientes" subtitle={`${pets.length} mascotas registradas`} actionLabel="Nuevo paciente" />
 
       <div className="p-6 space-y-4">
-        {/* Filters */}
         <Card>
           <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
             <div className="relative flex-1">
@@ -113,10 +113,7 @@ export function PatientsView() {
                   key={s}
                   size="sm"
                   variant={speciesFilter === s ? 'default' : 'outline'}
-                  className={cn(
-                    'h-8',
-                    speciesFilter === s && 'bg-emerald-600 hover:bg-emerald-700'
-                  )}
+                  className={cn('h-8', speciesFilter === s && 'bg-emerald-600 hover:bg-emerald-700')}
                   onClick={() => setSpeciesFilter(s)}
                 >
                   {s}
@@ -129,10 +126,7 @@ export function PatientsView() {
                   key={s}
                   size="sm"
                   variant={statusFilter === s ? 'default' : 'outline'}
-                  className={cn(
-                    'h-8',
-                    statusFilter === s && 'bg-emerald-600 hover:bg-emerald-700'
-                  )}
+                  className={cn('h-8', statusFilter === s && 'bg-emerald-600 hover:bg-emerald-700')}
                   onClick={() => setStatusFilter(s)}
                 >
                   {s}
@@ -142,21 +136,18 @@ export function PatientsView() {
           </CardContent>
         </Card>
 
-        {/* Pet grid */}
         {filtered.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
               <Dog className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
-                No se encontraron pacientes con esos criterios
-              </p>
+              <p className="text-sm text-muted-foreground">No se encontraron pacientes con esos criterios</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filtered.map(pet => {
               const Icon = SPECIES_ICON[pet.species] || Dog
-              const client = getClient(pet.clientId)
+              const client = clients.find(c => c.id === pet.clientId)
               return (
                 <Card
                   key={pet.id}
@@ -164,16 +155,9 @@ export function PatientsView() {
                   onClick={() => setSelectedPetId(pet.id)}
                 >
                   <div className="relative aspect-square overflow-hidden bg-muted">
-                    <img
-                      src={pet.photoUrl}
-                      alt={pet.name}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
                     <div className="absolute left-2 top-2">
-                      <Badge
-                        variant="outline"
-                        className={cn('border bg-white/90 capitalize text-[10px]', STATUS_STYLES[pet.status])}
-                      >
+                      <Badge variant="outline" className={cn('border bg-white/90 capitalize text-[10px]', STATUS_STYLES[pet.status])}>
                         {pet.status}
                       </Badge>
                     </div>
@@ -186,18 +170,14 @@ export function PatientsView() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-foreground truncate">{pet.name}</h3>
-                      <span className="text-[11px] text-muted-foreground">
-                        {calculateAge(pet.birthDate)}
-                      </span>
+                      <span className="text-[11px] text-muted-foreground">{calculateAge(pet.birthDate)}</span>
                     </div>
                     <p className="text-[12px] text-muted-foreground truncate">{pet.breed}</p>
                     <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
                       <span className="text-[11px] text-muted-foreground truncate">
                         {client?.name.split(' ').slice(0, 2).join(' ')}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {pet.weight}kg
-                      </span>
+                      <span className="text-[11px] text-muted-foreground">{pet.weight}kg</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -207,24 +187,29 @@ export function PatientsView() {
         )}
       </div>
 
-      {/* Pet detail dialog */}
       <Dialog open={!!selectedPet} onOpenChange={open => !open && setSelectedPetId(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
-          {selectedPet && <PetDetail pet={selectedPet} />}
+          {selectedPet && (
+            <PetDetail
+              pet={selectedPet}
+              client={clients.find(c => c.id === selectedPet.clientId) || null}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) {
-  const client = getClient(pet.clientId)
+function PetDetail({ pet, client }: { pet: Pet; client: Client | null }) {
   const Icon = SPECIES_ICON[pet.species] || Dog
-  const history = getAppointmentsByPet(pet.id).slice(0, 5)
+  const { data: allAppointments = [] } = useAppointments()
+  const history = allAppointments
+    .filter(a => a.petId === pet.id)
+    .slice(0, 5)
 
   return (
     <div>
-      {/* Header with photo */}
       <div className="relative h-48 bg-muted">
         <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -232,10 +217,7 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
           <div className="text-white">
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-bold">{pet.name}</h2>
-              <Badge
-                variant="outline"
-                className={cn('capitalize border-white/30 bg-white/20 text-white', STATUS_STYLES[pet.status])}
-              >
+              <Badge variant="outline" className={cn('capitalize border-white/30 bg-white/20 text-white', STATUS_STYLES[pet.status])}>
                 {pet.status}
               </Badge>
             </div>
@@ -248,30 +230,13 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
       </div>
 
       <div className="p-6 space-y-5">
-        {/* Quick stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatBox icon={Weight} label="Peso" value={`${pet.weight} kg`} color="emerald" />
-          <StatBox
-            icon={pet.sex === 'M' ? Mars : Venus}
-            label="Sexo"
-            value={pet.sex === 'M' ? 'Macho' : 'Hembra'}
-            color="violet"
-          />
-          <StatBox
-            icon={ShieldCheck}
-            label="Esterilizado"
-            value={pet.sterilized ? 'Sí' : 'No'}
-            color="amber"
-          />
-          <StatBox
-            icon={Microchip}
-            label="Microchip"
-            value={pet.microchip || 'Sin chip'}
-            color="sky"
-          />
+          <StatBox icon={pet.sex === 'M' ? Mars : Venus} label="Sexo" value={pet.sex === 'M' ? 'Macho' : 'Hembra'} color="violet" />
+          <StatBox icon={ShieldCheck} label="Esterilizado" value={pet.sterilized ? 'Sí' : 'No'} color="amber" />
+          <StatBox icon={Microchip} label="Microchip" value={pet.microchip || 'Sin chip'} color="sky" />
         </div>
 
-        {/* Owner info */}
         {client && (
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -308,7 +273,6 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Allergies & conditions */}
           <div className="space-y-3">
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -319,9 +283,7 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {pet.allergies.map(a => (
-                    <Badge key={a} variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                      {a}
-                    </Badge>
+                    <Badge key={a} variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{a}</Badge>
                   ))}
                 </div>
               )}
@@ -335,16 +297,13 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {pet.chronicConditions.map(c => (
-                    <Badge key={c} variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">
-                      {c}
-                    </Badge>
+                    <Badge key={c} variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">{c}</Badge>
                   ))}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Vaccines */}
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Syringe className="h-4 w-4 text-emerald-600" /> Cartilla de vacunación
@@ -358,10 +317,7 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
                   const overdue = days !== null && days < 0
                   const soon = days !== null && days >= 0 && days <= 30
                   return (
-                    <li
-                      key={v.name}
-                      className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-1.5 text-[12px]"
-                    >
+                    <li key={v.id} className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-1.5 text-[12px]">
                       <div>
                         <p className="font-medium text-foreground">{v.name}</p>
                         <p className="text-[11px] text-muted-foreground">Aplicada: {formatDate(v.date)}</p>
@@ -370,15 +326,12 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
                         {v.nextDue && (
                           <>
                             <p className="text-[11px] text-muted-foreground">Próxima</p>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                'text-[10px]',
-                                overdue && 'bg-rose-50 text-rose-700 border-rose-200',
-                                soon && 'bg-amber-50 text-amber-700 border-amber-200',
-                                !overdue && !soon && 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              )}
-                            >
+                            <Badge variant="outline" className={cn(
+                              'text-[10px]',
+                              overdue && 'bg-rose-50 text-rose-700 border-rose-200',
+                              soon && 'bg-amber-50 text-amber-700 border-amber-200',
+                              !overdue && !soon && 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            )}>
                               {overdue ? 'Vencida' : formatDate(v.nextDue)}
                             </Badge>
                           </>
@@ -392,7 +345,6 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
           </div>
         </div>
 
-        {/* Clinical history */}
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
             <Calendar className="h-4 w-4 text-violet-600" /> Historial clínico reciente
@@ -401,28 +353,20 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
             <p className="text-[12px] text-muted-foreground">Sin consultas previas</p>
           ) : (
             <ul className="space-y-2">
-              {history.map(apt => {
-                const vet = getVet(apt.vetId)
-                return (
-                  <li
-                    key={apt.id}
-                    className="flex items-start gap-3 rounded-lg border border-border p-3"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50">
-                      <Pill className="h-4 w-4 text-violet-600" />
+              {history.map(apt => (
+                <li key={apt.id} className="flex items-start gap-3 rounded-lg border border-border p-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50">
+                    <Pill className="h-4 w-4 text-violet-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[13px] font-medium text-foreground">{apt.reason}</p>
+                      <Badge variant="secondary" className="text-[10px]">{apt.type}</Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[13px] font-medium text-foreground">{apt.reason}</p>
-                        <Badge variant="secondary" className="text-[10px]">{apt.type}</Badge>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        {formatDate(apt.date)} · {vet?.name} · {apt.time}
-                      </p>
-                    </div>
-                  </li>
-                )
-              })}
+                    <p className="text-[11px] text-muted-foreground">{formatDate(apt.date)} · {apt.time}</p>
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </div>
@@ -431,17 +375,7 @@ function PetDetail({ pet }: { pet: NonNullable<ReturnType<typeof pets.find>> }) 
   )
 }
 
-function StatBox({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: any
-  label: string
-  value: string
-  color: string
-}) {
+function StatBox({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   const styles: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-700',
     violet: 'bg-violet-50 text-violet-700',
