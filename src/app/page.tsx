@@ -11,7 +11,6 @@ import { BillingView } from '@/components/vet/billing'
 import { StaffView } from '@/components/vet/staff'
 import { EmrView } from '@/components/vet/emr/emr-view'
 import { ClientPortal } from '@/components/vet/client-portal'
-import { ViewSwitcher } from '@/components/vet/view-switcher'
 
 export type ModuleKey =
   | 'dashboard'
@@ -32,17 +31,20 @@ export default function Home() {
   if (view === 'client') {
     return (
       <div className="min-h-screen bg-muted/30">
-        <ViewSwitcher view={view} onChange={setView} />
-        <ClientPortal />
+        <ClientPortal view={view} onViewChange={setView} />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen flex bg-muted/30">
-      <Sidebar active={active} onChange={setActive} />
+      <Sidebar
+        active={active}
+        onChange={setActive}
+        view={view}
+        onViewChange={setView}
+      />
       <main className="flex-1 overflow-x-hidden">
-        <ViewSwitcher view={view} onChange={setView} />
         {active === 'dashboard' && <Dashboard onNavigate={setActive} />}
         {active === 'patients' && <PatientsView />}
         {active === 'clients' && <ClientsView />}

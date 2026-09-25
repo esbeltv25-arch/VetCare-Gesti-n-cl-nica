@@ -13,15 +13,20 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  UserRound,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { appointments, inventory } from '@/lib/vet-data'
+import { ViewSwitcher } from '@/components/vet/view-switcher'
+import type { ViewMode } from '@/app/page'
 
 interface SidebarProps {
   active: string
   onChange: (key: any) => void
+  view: ViewMode
+  onViewChange: (v: ViewMode) => void
 }
 
 const NAV_ITEMS = [
@@ -35,7 +40,7 @@ const NAV_ITEMS = [
   { key: 'staff', label: 'Personal', icon: UserCog, badge: null },
 ]
 
-export function Sidebar({ active, onChange }: SidebarProps) {
+export function Sidebar({ active, onChange, view, onViewChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const todaysAppointments = appointments.filter(
@@ -128,6 +133,20 @@ export function Sidebar({ active, onChange }: SidebarProps) {
               {lowStockItems}
             </Badge>
           </div>
+        </div>
+      )}
+
+      {/* View switcher (staff → client) */}
+      {!collapsed && <ViewSwitcher view={view} onChange={onViewChange} variant="sidebar" />}
+      {collapsed && (
+        <div className="m-3 flex justify-center">
+          <button
+            onClick={() => onViewChange('client')}
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-600 text-white hover:bg-violet-700"
+            title="Ir a Portal cliente"
+          >
+            <UserRound className="h-4 w-4" />
+          </button>
         </div>
       )}
 

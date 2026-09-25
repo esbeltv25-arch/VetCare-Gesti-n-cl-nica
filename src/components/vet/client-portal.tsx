@@ -35,6 +35,13 @@ import { cn } from '@/lib/utils'
 import { useClients, usePets, useAppointments, useVets } from '@/lib/vet-hooks'
 import { calculateAge, formatDate, daysUntil, formatCurrency } from '@/lib/vet-data'
 import { TelemedicineCall } from '@/components/vet/telemedicine-call'
+import { ViewSwitcher } from '@/components/vet/view-switcher'
+import type { ViewMode } from '@/app/page'
+
+interface ClientPortalProps {
+  view: ViewMode
+  onViewChange: (v: ViewMode) => void
+}
 
 const SPECIES_ICON: Record<string, any> = {
   'Perro': Dog,
@@ -52,7 +59,7 @@ const TYPE_STYLES: Record<string, string> = {
   'Peluquería': 'bg-pink-100 text-pink-700 border-pink-200',
 }
 
-export function ClientPortal() {
+export function ClientPortal({ view, onViewChange }: ClientPortalProps) {
   const { data: clients = [] } = useClients()
   const [clientId, setClientId] = useState<string | null>(null)
   const [email, setEmail] = useState('')
@@ -78,6 +85,10 @@ export function ClientPortal() {
   if (!selectedClient) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-violet-50 via-white to-emerald-50">
+        {/* View switcher en la esquina superior derecha solo en login */}
+        <div className="fixed top-4 right-4 z-30">
+          <ViewSwitcher view={view} onChange={onViewChange} variant="header" />
+        </div>
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-emerald-500 text-white shadow-md">
@@ -123,10 +134,27 @@ export function ClientPortal() {
     )
   }
 
-  return <ClientDashboard clientId={selectedClient.id} onLogout={handleLogout} />
+  return (
+    <ClientDashboard
+      clientId={selectedClient.id}
+      onLogout={handleLogout}
+      view={view}
+      onViewChange={onViewChange}
+    />
+  )
 }
 
-function ClientDashboard({ clientId, onLogout }: { clientId: string; onLogout: () => void }) {
+function ClientDashboard({
+  clientId,
+  onLogout,
+  view,
+  onViewChange,
+}: {
+  clientId: string
+  onLogout: () => void
+  view: ViewMode
+  onViewChange: (v: ViewMode) => void
+}) {
   const { data: clients = [] } = useClients()
   const { data: pets = [] } = usePets()
   const { data: appointments = [] } = useAppointments()
@@ -157,6 +185,7 @@ function ClientDashboard({ clientId, onLogout }: { clientId: string; onLogout: (
           </div>
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <ViewSwitcher view={view} onChange={onViewChange} variant="header" />
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             <Award className="h-3 w-3 mr-1" />
             {client.loyaltyPoints} puntos
