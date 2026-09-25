@@ -43,6 +43,7 @@ model Pet {
   microchip         String      @default("")
   sterilized        Boolean     @default(false)
   photoUrl          String
+  galleryPhotos     String      @default("[]")  // JSON array de base64 strings
   allergies         String      @default("[]")
   chronicConditions String      @default("[]")
   status            String      @default("Sano")
@@ -54,6 +55,18 @@ model Pet {
   invoices          Invoice[]
   consultations     Consultation[]
   hospitalizations  Hospitalization[]
+}
+
+// Singleton: personalización de la clínica (colores, nombre de marca, etiquetas, modo oscuro)
+model ClinicSettings {
+  id             String   @id @default("singleton")
+  brandName      String   @default("VetCare")
+  brandSubtitle  String   @default("Gestión clínica")
+  primaryColor   String   @default("#10b981")  // emerald por defecto
+  accentColor    String   @default("#7c3aed")  // violeta
+  darkMode       Boolean  @default(false)
+  moduleLabels   String   @default("{}")  // JSON overrides de etiquetas del sidebar
+  updatedAt      DateTime @updatedAt
 }
 
 model Vaccine {

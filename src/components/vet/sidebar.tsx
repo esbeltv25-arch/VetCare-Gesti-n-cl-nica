@@ -16,12 +16,16 @@ import {
   UserRound,
   HelpCircle,
   BedDouble,
+  Palette,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { appointments, inventory } from '@/lib/vet-data'
 import { ViewSwitcher } from '@/components/vet/view-switcher'
+import { useClinicSettings, useApplyClinicSettings } from '@/lib/vet-clinic-hooks'
 import type { ViewMode } from '@/app/page'
 
 interface SidebarProps {
@@ -30,6 +34,7 @@ interface SidebarProps {
   view: ViewMode
   onViewChange: (v: ViewMode) => void
   onOpenGuide?: () => void
+  onOpenSettings?: () => void
 }
 
 const NAV_ITEMS = [
@@ -44,7 +49,9 @@ const NAV_ITEMS = [
   { key: 'staff', label: 'Personal', icon: UserCog, badge: null },
 ]
 
-export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide }: SidebarProps) {
+export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide, onOpenSettings }: SidebarProps) {
+  useApplyClinicSettings()
+  const { data: settings } = useClinicSettings()
   const [collapsed, setCollapsed] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const todaysAppointments = appointments.filter(
@@ -61,20 +68,34 @@ export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide }: S
     >
       {/* Logo + help */}
       <div className="flex items-center gap-3 p-4 border-b border-border h-16">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+          style={{ background: settings?.primaryColor || '#10b981' }}
+        >
           <Stethoscope className="h-6 w-6" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">VetCare</span>
-            <span className="text-[11px] text-muted-foreground">Gestión clínica</span>
+            <span className="text-lg font-bold text-foreground">{settings?.brandName || 'VetCare'}</span>
+            <span className="text-[11px] text-muted-foreground">{settings?.brandSubtitle || 'Gestión clínica'}</span>
           </div>
+        )}
+        {onOpenSettings && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto h-8 w-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+            onClick={onOpenSettings}
+            title="Personalizar"
+          >
+            <Palette className="h-4 w-4" />
+          </Button>
         )}
         {onOpenGuide && (
           <Button
             variant="ghost"
             size="icon"
-            className="ml-auto h-8 w-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+            className="h-8 w-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
             onClick={onOpenGuide}
             title="Abrir guía"
           >
@@ -96,6 +117,7 @@ export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide }: S
         {NAV_ITEMS.map(item => {
           const Icon = item.icon
           const isActive = active === item.key
+          const displayLabel = settings?.moduleLabels?.[item.key] || item.label
           return (
             <button
               key={item.key}
@@ -103,16 +125,20 @@ export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide }: S
               className={cn(
                 'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
                 isActive
-                  ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                  ? 'shadow-sm text-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 collapsed && 'justify-center'
               )}
-              title={collapsed ? item.label : undefined}
+              style={isActive ? {
+                background: `color-mix(in srgb, ${settings?.primaryColor || '#10b981'} 12%, white)`,
+                color: settings?.primaryColor || '#10b981',
+              } : undefined}
+              title={collapsed ? displayLabel : undefined}
             >
               <Icon className="h-5 w-5 shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="flex-1 text-left">{displayLabel}</span>
                   {item.badge && (
                     <Badge
                       variant={item.badge === '!' ? 'destructive' : 'secondary'}

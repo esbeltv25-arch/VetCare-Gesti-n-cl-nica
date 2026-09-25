@@ -38,6 +38,7 @@ import { cn } from '@/lib/utils'
 import { usePets, useClients, useAppointments } from '@/lib/vet-hooks'
 import type { Pet, Client, Appointment } from '@/lib/vet-data'
 import { calculateAge, formatDate, daysUntil } from '@/lib/vet-data'
+import { PetGallery } from '@/components/vet/pet-gallery'
 
 const STATUS_STYLES: Record<string, string> = {
   'Sano': 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -303,6 +304,9 @@ function PetDetail({ pet, client }: { pet: Pet; client: Client | null }) {
               )}
             </div>
           </div>
+
+          {/* Photo gallery */}
+          <PetGallery pet={pet} />
 
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">

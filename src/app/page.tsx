@@ -13,6 +13,8 @@ import { EmrView } from '@/components/vet/emr/emr-view'
 import { HospitalizationView } from '@/components/vet/hospitalization/hospitalization-view'
 import { ClientPortal } from '@/components/vet/client-portal'
 import { GuideModal } from '@/components/vet/guide-modal'
+import { SettingsDialog } from '@/components/vet/settings-dialog'
+import { useApplyClinicSettings } from '@/lib/vet-clinic-hooks'
 
 export type ModuleKey =
   | 'dashboard'
@@ -31,12 +33,17 @@ export default function Home() {
   const [view, setView] = useState<ViewMode>('staff')
   const [active, setActive] = useState<ModuleKey>('dashboard')
   const [guideOpen, setGuideOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Aplicar settings al documento (CSS variables + dark mode + brand name)
+  useApplyClinicSettings()
 
   if (view === 'client') {
     return (
       <div className="min-h-screen bg-muted/30">
         <ClientPortal view={view} onViewChange={setView} />
         <GuideModal open={guideOpen} onOpenChange={setGuideOpen} />
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       </div>
     )
   }
@@ -49,6 +56,7 @@ export default function Home() {
         view={view}
         onViewChange={setView}
         onOpenGuide={() => setGuideOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <main className="flex-1 overflow-x-hidden">
         {active === 'dashboard' && <Dashboard onNavigate={setActive} />}
@@ -62,6 +70,7 @@ export default function Home() {
         {active === 'staff' && <StaffView />}
       </main>
       <GuideModal open={guideOpen} onOpenChange={setGuideOpen} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }

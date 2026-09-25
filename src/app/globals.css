@@ -119,4 +119,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Variables dinámicas de personalización de la clínica.
+     Se sobreescriben en runtime por useApplyClinicSettings() con el color
+     elegido por el usuario. */
+  :root {
+    --clinic-primary: #10b981;
+    --clinic-accent: #7c3aed;
+    --clinic-primary-light: color-mix(in srgb, var(--clinic-primary) 12%, white);
+    --clinic-accent-light: color-mix(in srgb, var(--clinic-accent) 12%, white);
+  }
 }

@@ -24,6 +24,7 @@ export interface Pet {
   sterilized: boolean
   clientId: string
   photoUrl: string
+  galleryPhotos?: string[] // base64 strings, fotos adicionales para reconocimiento
   allergies: string[]
   chronicConditions: string[]
   vaccines: { name: string; date: string; nextDue?: string }[]
