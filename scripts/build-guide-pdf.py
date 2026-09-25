@@ -288,6 +288,79 @@ GUIDE_CHAPTERS = [
                 ],
             },
             {
+                "id": "hospitalization",
+                "title": "Internación / Guardia (tiempo real)",
+                "subtitle": "Bitácora en vivo para auxiliares nocturnos y fines de semana",
+                "blocks": [
+                    {"type": "paragraph", "text": (
+                        "El módulo Internación gestiona todos los pacientes hospitalizados y su bitácora "
+                        "de cuidado en tiempo real. Está pensado para los auxiliares que hacen turnos "
+                        "de noche y fines de semana: cada acción que registran (medicamentos, "
+                        "incidencias, comportamientos, constantes) queda visible al instante para todos "
+                        "los veterinarios conectados, sin necesidad de refrescar la página."
+                    )},
+                    {"type": "paragraph", "text": (
+                        "El sistema usa polling automático cada 5 segundos vía TanStack Query "
+                        "(refetchInterval: 5000 + refetchOnWindowFocus). Esto significa que si el "
+                        "auxiliar de noche registra una incidencia crítica a las 03:30, el veterinario "
+                        "que llega por la mañana la verá inmediatamente al abrir la app, sin tener que "
+                        "pulsar ningún botón."
+                    )},
+                    {"type": "list", "items": [
+                        "4 KPIs: internados activos, en observación, medicamentos administrados, incidencias totales",
+                        "Banner \"Sistema online · tiempo real\" con timestamp de última sincronización",
+                        "Tarjetas por paciente con foto, estado (Activa/Observación/Alta), box, vet responsable y última entrada como preview",
+                        "Buscador por nombre de mascota, box o motivo",
+                        "Botón \"Admitir paciente\" para registrar nueva internación (pet, vet, box, motivo, plan alimentación, fluidoterapia, notas)",
+                        "Botón \"Dar de alta\" que marca discharged y archiva la bitácora",
+                    ]},
+                    {"type": "paragraph", "text": (
+                        "Al pulsar una tarjeta se abre el detalle del paciente internado. La pantalla "
+                        "tiene dos columnas: a la izquierda un formulario rápido para añadir entradas "
+                        "a la bitácora (con 6 tipos distintos), y a la derecha el feed cronológico en "
+                        "tiempo real de todas las entradas registradas, ordenadas de más reciente a "
+                        "más antigua."
+                    )},
+                    {"type": "callout", "variant": "ai", "text": (
+                        "Cada entrada registrada dispara una mutación que invalida las queries de "
+                        "TanStack Query. La UI se actualiza inmediatamente para el usuario que la "
+                        "escribió, y para el resto de usuarios el polling de 5 segundos propagará la "
+                        "entrada. Aparece un toast \"visible en tiempo real para todos\"."
+                    )},
+                    {"type": "paragraph", "text": (
+                        "Existen 6 tipos de entrada en la bitácora, cada uno con su propio icono y "
+                        "color en el feed:"
+                    )},
+                    {"type": "steps", "steps": [
+                        {"title": "Medicamento (ámbar)", "description": "Registra fármacos administrados. Campos: nombre del fármaco, dosis en mg, dosis en mg/kg (calculada), vía (Oral/IV/IM/SC/Tópica/Sublingual/Oftálmica/Ótica). Se muestra como tarjeta ámbar con badge del fármaco en el feed."},
+                        {"title": "Incidencia (rosa)", "description": "Cualquier evento anómalo: vómitos, cianosis, caídas, reacciones adversas, etc. Selecciona severidad (Info/Advertencia/Crítica) que aparece como badge coloreado. Las incidencias críticas deberían avisar al vet de guardia."},
+                        {"title": "Comportamiento (verde)", "description": "Observaciones clínicas del estado del paciente: tranquilidad, reactividad, posición, interacción con personal o dueños, sueño, etc. Texto libre. Es la entrada más habitual en turnos de observación."},
+                        {"title": "Constantes (azul cielo)", "description": "Signos vitales: temperatura (°C), FC (lpm), FR (rpm), peso (kg), apetito (voluntario/poco/no come), hidratación (normohidratado/deshidratado/sobrehidratado), micción (normal/oliguria/anuria/poliuria), heces (normal/diarrea/estreñimiento/ausente). Se renderiza como grid de pills azules con cada constante."},
+                        {"title": "Nota (gris)", "description": "Cualquier otra información relevante: visita del dueño, llamada al especialista, ajuste de plan, etc. Entrada genérica de texto libre."},
+                        {"title": "Relevo de turno (violeta)", "description": "El handover: entrada especial con datos personales del vet/auxiliar saliente y del entrante. Se accede desde el botón \"Relevo de turno\" del header. Abre un modal con protocolo visual [Saliente → Entrante], selector de quién recibe, y campo de notas de relevo pre-rellenado con la última entrada del log."},
+                    ]},
+                    {"type": "callout", "variant": "warning", "text": (
+                        "El handover es crítico para la continuidad asistencial: cada vez que un "
+                        "auxiliar termina su turno debe hacer relevo formal. En las notas debe incluir: "
+                        "evolución del paciente, próximas dosis/horas programadas, signos de alarma a "
+                        "vigilar, y cualquier indicación especial. Esta entrada es visible inmediatamente "
+                        "para el entrante."
+                    )},
+                    {"type": "paragraph", "text": (
+                        "El protocolo de handover muestra visualmente el vet saliente (con avatar, "
+                        "nombre completo y rol) y un selector para elegir el entrante. Al confirmar, "
+                        "se crea una entrada tipo \"handover\" en la bitácora que aparece destacada "
+                        "en violeta con ambos avatares."
+                    )},
+                    {"type": "callout", "variant": "tip", "text": (
+                        "Cada entrada del feed muestra: tipo (badge coloreado), severidad si aplica, "
+                        "timestamp, contenido, detalles específicos (medicación, constantes), y abajo "
+                        "el avatar + nombre + rol del reporter. En handovers, también el avatar del "
+                        "incoming."
+                    )},
+                ],
+            },
+            {
                 "id": "inventory",
                 "title": "Inventario",
                 "subtitle": "Control de stock, lotes y vencimientos",
