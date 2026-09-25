@@ -10,6 +10,7 @@ import { InventoryView } from '@/components/vet/inventory'
 import { BillingView } from '@/components/vet/billing'
 import { StaffView } from '@/components/vet/staff'
 import { EmrView } from '@/components/vet/emr/emr-view'
+import { HospitalizationView } from '@/components/vet/hospitalization/hospitalization-view'
 import { ClientPortal } from '@/components/vet/client-portal'
 import { GuideModal } from '@/components/vet/guide-modal'
 
@@ -19,6 +20,7 @@ export type ModuleKey =
   | 'clients'
   | 'appointments'
   | 'emr'
+  | 'hospitalization'
   | 'inventory'
   | 'billing'
   | 'staff'
@@ -54,6 +56,7 @@ export default function Home() {
         {active === 'clients' && <ClientsView />}
         {active === 'appointments' && <AppointmentsView />}
         {active === 'emr' && <EmrView />}
+        {active === 'hospitalization' && <HospitalizationView />}
         {active === 'inventory' && <InventoryView />}
         {active === 'billing' && <BillingView />}
         {active === 'staff' && <StaffView />}

@@ -15,6 +15,7 @@ import {
   Sparkles,
   UserRound,
   HelpCircle,
+  BedDouble,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { key: 'clients', label: 'Clientes', icon: Users, badge: '7' },
   { key: 'appointments', label: 'Agenda', icon: Calendar, badge: '12' },
   { key: 'emr', label: 'Historia Clínica', icon: Stethoscope, badge: 'IA' },
+  { key: 'hospitalization', label: 'Internación', icon: BedDouble, badge: 'live' },
   { key: 'inventory', label: 'Inventario', icon: Package, badge: '!' },
   { key: 'billing', label: 'Facturación', icon: Receipt, badge: null },
   { key: 'staff', label: 'Personal', icon: UserCog, badge: null },
@@ -116,11 +118,15 @@ export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide }: S
                       variant={item.badge === '!' ? 'destructive' : 'secondary'}
                       className={cn(
                         'h-5 min-w-5 justify-center px-1.5 text-[10px]',
-                        item.badge === 'IA' && 'bg-violet-100 text-violet-700 hover:bg-violet-100'
+                        item.badge === 'IA' && 'bg-violet-100 text-violet-700 hover:bg-violet-100',
+                        item.badge === 'live' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
                       )}
                     >
                       {item.badge === 'IA' && <Sparkles className="h-2.5 w-2.5 mr-0.5" />}
-                      {item.badge}
+                      {item.badge === 'live' && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse mr-0.5" />
+                      )}
+                      {item.badge === 'live' ? 'LIVE' : item.badge}
                     </Badge>
                   )}
                 </>

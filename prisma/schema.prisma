@@ -53,6 +53,7 @@ model Pet {
   appointments      Appointment[]
   invoices          Invoice[]
   consultations     Consultation[]
+  hospitalizations  Hospitalization[]
 }
 
 model Vaccine {
@@ -78,6 +79,9 @@ model Vet {
   avatarColor       String
   appointments      Appointment[]
   consultations     Consultation[]
+  shiftLogsAsReporter ShiftLog[] @relation("ReporterVetShiftLogs")
+  shiftLogsAsIncoming ShiftLog[] @relation("IncomingVetShiftLogs")
+  attendingFor      Hospitalization[]
 }
 
 model Appointment {
@@ -187,4 +191,57 @@ model Treatment {
   notes          String?
   isAiSuggested  Boolean  @default(false)
   accepted       Boolean  @default(false)
+}
+
+// Internación / guardia: bitacora en tiempo real para auxiliares nocturnos y fines de semana
+model Hospitalization {
+  id               String   @id @default(cuid())
+  pet              Pet      @relation(fields: [petId], references: [id])
+  petId            String
+  attendingVet     Vet      @relation(fields: [attendingVetId], references: [id])
+  attendingVetId   String
+  admissionDate    DateTime @default(now())
+  dischargeDate    DateTime?
+  cage             String   // ej. "Box 3", "Jaula A-12"
+  status           String   @default("active") // active | observation | discharged
+  reason           String   // motivo de internación
+  weightKg         Float?
+  feedingPlan      String?  // plan de alimentación
+  fluidTherapy     String?  // fluidoterapia activa
+  notes            String?  // notas generales del alta
+  shiftLogs        ShiftLog[]
+}
+
+model ShiftLog {
+  id                String   @id @default(cuid())
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  hospitalizationId String
+  timestamp         DateTime @default(now())
+  type              String   // medication | incident | behavior | vital | note | handover
+  reporterVet       Vet      @relation("ReporterVetShiftLogs", fields: [reporterVetId], references: [id])
+  reporterVetId     String
+  incomingVet       Vet?     @relation("IncomingVetShiftLogs", fields: [incomingVetId], references: [id])
+  incomingVetId     String?
+
+  // Common
+  content           String
+
+  // Medication
+  drugName          String?
+  doseMg            Float?
+  dosePerKg         Float?
+  route             String?
+
+  // Vitals
+  temperatureC      Float?
+  heartRate         Int?
+  respiratoryRate   Int?
+  weightKg          Float?
+  appetite           String?  // come | no come | poco | voluntario
+  hydration          String?  // normohidratado | deshidratado | sobrehidratado
+  urination          String?  // normal | oliguria | anuria | poliuria
+  feces              String?  // normal | diarrea | estreñimiento | ausente
+
+  // Incident severity
+  severity          String?  // info | warning | critical
 }
