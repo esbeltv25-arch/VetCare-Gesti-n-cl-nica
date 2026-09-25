@@ -52,6 +52,7 @@ model Pet {
   vaccines          Vaccine[]
   appointments      Appointment[]
   invoices          Invoice[]
+  consultations     Consultation[]
 }
 
 model Vaccine {
@@ -76,6 +77,7 @@ model Vet {
   rating            Float         @default(0)
   avatarColor       String
   appointments      Appointment[]
+  consultations     Consultation[]
 }
 
 model Appointment {
@@ -127,4 +129,62 @@ model InvoiceItem {
   unitPrice   Float
   invoice     Invoice @relation(fields: [invoiceId], references: [id])
   invoiceId   String
+}
+
+model Consultation {
+  id           String   @id @default(cuid())
+  date         DateTime @default(now())
+  pet          Pet      @relation(fields: [petId], references: [id])
+  petId        String
+  vet          Vet      @relation(fields: [vetId], references: [id])
+  vetId        String
+  appointmentId String?
+  // SOAP
+  subjective   String   @default("")
+  objective    String   @default("")
+  assessment   String   @default("")
+  plan         String   @default("")
+  reason       String   @default("")
+  // AI metadata
+  audioTranscript String?
+  aiGenerated     Boolean  @default(false)
+  aiSummary       String?
+  // Vitals
+  weightKg     Float?
+  temperatureC Float?
+  heartRate    Int?
+  respiratoryRate Int?
+  bodyConditionScore Float?
+  // Status
+  status       String   @default("borrador") // borrador | finalizada
+  diagnoses   Diagnosis[]
+  treatments  Treatment[]
+}
+
+model Diagnosis {
+  id             String   @id @default(cuid())
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  consultationId String
+  name           String
+  icdCode        String?
+  confidence     Float?
+  isPrimary      Boolean  @default(false)
+  isAiSuggested  Boolean  @default(false)
+  accepted       Boolean  @default(false)
+  notes          String?
+}
+
+model Treatment {
+  id             String   @id @default(cuid())
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  consultationId String
+  drugName       String
+  doseMg         Float
+  dosePerKg      Float?
+  frequency      String
+  duration       String
+  route          String
+  notes          String?
+  isAiSuggested  Boolean  @default(false)
+  accepted       Boolean  @default(false)
 }

@@ -12,6 +12,7 @@ import {
   Stethoscope,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { key: 'patients', label: 'Pacientes', icon: Dog, badge: '10' },
   { key: 'clients', label: 'Clientes', icon: Users, badge: '7' },
   { key: 'appointments', label: 'Agenda', icon: Calendar, badge: '12' },
+  { key: 'emr', label: 'Historia Clínica', icon: Stethoscope, badge: 'IA' },
   { key: 'inventory', label: 'Inventario', icon: Package, badge: '!' },
   { key: 'billing', label: 'Facturación', icon: Receipt, badge: null },
   { key: 'staff', label: 'Personal', icon: UserCog, badge: null },
@@ -94,8 +96,12 @@ export function Sidebar({ active, onChange }: SidebarProps) {
                   {item.badge && (
                     <Badge
                       variant={item.badge === '!' ? 'destructive' : 'secondary'}
-                      className="h-5 min-w-5 justify-center px-1.5 text-[10px]"
+                      className={cn(
+                        'h-5 min-w-5 justify-center px-1.5 text-[10px]',
+                        item.badge === 'IA' && 'bg-violet-100 text-violet-700 hover:bg-violet-100'
+                      )}
                     >
+                      {item.badge === 'IA' && <Sparkles className="h-2.5 w-2.5 mr-0.5" />}
                       {item.badge}
                     </Badge>
                   )}

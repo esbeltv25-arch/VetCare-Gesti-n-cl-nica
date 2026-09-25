@@ -1,6 +1,7 @@
 'use client'
 
 // Modal de videollamada de telemedicina: video grid + controles + chat en tiempo real
+// Al finalizar, genera resumen automático con IA para el cliente y el veterinario
 import { useState, useEffect, useRef } from 'react'
 import {
   Mic,
@@ -14,12 +15,20 @@ import {
   X,
   Settings,
   Pill,
+  Loader2,
+  Sparkles,
+  FileText,
+  Calendar,
+  Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
 import { usePets, useVets, useAppointments } from '@/lib/vet-hooks'
+import { useAITelemedicineSummary, type TelemedicineSummary } from '@/lib/vet-emr-hooks'
 
 interface TelemedicineCallProps {
   petId: string
@@ -55,6 +64,10 @@ export function TelemedicineCall({ petId, clientId, onClose }: TelemedicineCallP
       time: '',
     },
   ])
+  // Estado del resumen IA al finalizar la llamada
+  const [summary, setSummary] = useState<TelemedicineSummary | null>(null)
+  const [generatingSummary, setGeneratingSummary] = useState(false)
+  const summaryMutation = useAITelemedicineSummary()
 
   const chatEndRef = useRef<HTMLDivElement>(null)
   const callStartedAt = useRef<Date | null>(null)
@@ -158,12 +171,41 @@ export function TelemedicineCall({ petId, clientId, onClose }: TelemedicineCallP
     }, 2500)
   }
 
-  const endCall = () => {
+  const endCall = async () => {
     setMessages(prev => [
       ...prev,
       { id: `end-${Date.now()}`, from: 'system', text: 'Llamada finalizada', time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) },
     ])
-    setTimeout(onClose, 600)
+    // Generar resumen IA con los mensajes del chat
+    setGeneratingSummary(true)
+    try {
+      const petContext = {
+        name: pet?.name,
+        species: pet?.species,
+        breed: pet?.breed,
+        age: pet?.birthDate,
+        weight: pet?.weight,
+      }
+      const vetContext = vet ? { name: vet.name, specialty: vet.specialty } : null
+      const result = await summaryMutation.mutateAsync({
+        pet: petContext,
+        vet: vetContext,
+        chatMessages: messages,
+        durationSec: seconds,
+      })
+      setSummary(result)
+      toast.success('Resumen IA generado')
+    } catch (e: any) {
+      toast.error('No se pudo generar el resumen IA: ' + e.message)
+      setTimeout(onClose, 800)
+    } finally {
+      setGeneratingSummary(false)
+    }
+  }
+
+  const closeSummary = () => {
+    setSummary(null)
+    onClose()
   }
 
   if (!pet) return null
@@ -362,6 +404,96 @@ export function TelemedicineCall({ petId, clientId, onClose }: TelemedicineCallP
           </Badge>
         </div>
       </div>
+
+      {/* AI Summary overlay (after endCall) */}
+      {(generatingSummary || summary) && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-emerald-500 text-white">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Resumen IA de la teleconsulta</CardTitle>
+                  <p className="text-[12px] text-muted-foreground">
+                    {pet?.name} · {vet?.name} · {formatDuration(seconds)} de duración
+                  </p>
+                </div>
+                {summary && (
+                  <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={closeSummary}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-5">
+              {generatingSummary && (
+                <div className="py-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-violet-600 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Analizando el chat y generando el resumen estructurado...</p>
+                  <p className="text-[11px] text-muted-foreground/70 mt-1">Esto puede tardar 5-10 segundos</p>
+                </div>
+              )}
+              {summary && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase text-muted-foreground mb-1.5">Resumen de la consulta</p>
+                    <p className="text-sm text-foreground leading-relaxed">{summary.summary}</p>
+                  </div>
+
+                  {summary.recommendations && summary.recommendations.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-medium uppercase text-muted-foreground mb-1.5">Recomendaciones para el dueño</p>
+                      <ul className="space-y-1.5">
+                        {summary.recommendations.map((r, i) => (
+                          <li key={i} className="flex items-start gap-2 text-[13px] text-foreground">
+                            <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                            <span>{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {summary.prescriptions && summary.prescriptions.length > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-[11px] font-medium uppercase text-amber-700 mb-1.5 flex items-center gap-1.5">
+                        <Pill className="h-3.5 w-3.5" /> Recetas digitales generadas
+                      </p>
+                      <ul className="space-y-1">
+                        {summary.prescriptions.map((p, i) => (
+                          <li key={i} className="text-[12px] text-amber-800">
+                            <strong>{p.drugName}</strong> · {p.dose} · {p.duration}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {summary.followUp && (
+                    <div className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3">
+                      <Calendar className="h-4 w-4 text-sky-600 shrink-0" />
+                      <p className="text-[12px] text-sky-700">
+                        <strong>Seguimiento:</strong> {summary.followUp}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 border-t border-border pt-3">
+                    <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200">
+                      <Sparkles className="h-2.5 w-2.5 mr-1" /> Generado por IA · revisar antes de enviar
+                    </Badge>
+                    <Button size="sm" className="ml-auto bg-emerald-600 hover:bg-emerald-700" onClick={closeSummary}>
+                      <FileText className="h-4 w-4" /> Entendido, cerrar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
