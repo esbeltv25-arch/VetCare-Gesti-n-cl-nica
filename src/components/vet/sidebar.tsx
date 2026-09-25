@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Sparkles,
   UserRound,
+  HelpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,7 @@ interface SidebarProps {
   onChange: (key: any) => void
   view: ViewMode
   onViewChange: (v: ViewMode) => void
+  onOpenGuide?: () => void
 }
 
 const NAV_ITEMS = [
@@ -40,7 +42,7 @@ const NAV_ITEMS = [
   { key: 'staff', label: 'Personal', icon: UserCog, badge: null },
 ]
 
-export function Sidebar({ active, onChange, view, onViewChange }: SidebarProps) {
+export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const todaysAppointments = appointments.filter(
@@ -55,7 +57,7 @@ export function Sidebar({ active, onChange, view, onViewChange }: SidebarProps) 
         collapsed ? 'w-20' : 'w-64'
       )}
     >
-      {/* Logo */}
+      {/* Logo + help */}
       <div className="flex items-center gap-3 p-4 border-b border-border h-16">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
           <Stethoscope className="h-6 w-6" />
@@ -66,10 +68,21 @@ export function Sidebar({ active, onChange, view, onViewChange }: SidebarProps) 
             <span className="text-[11px] text-muted-foreground">Gestión clínica</span>
           </div>
         )}
+        {onOpenGuide && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto h-8 w-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+            onClick={onOpenGuide}
+            title="Abrir guía"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
-          className="ml-auto h-7 w-7 text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground"
           onClick={() => setCollapsed(c => !c)}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}

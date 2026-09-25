@@ -11,6 +11,7 @@ import { BillingView } from '@/components/vet/billing'
 import { StaffView } from '@/components/vet/staff'
 import { EmrView } from '@/components/vet/emr/emr-view'
 import { ClientPortal } from '@/components/vet/client-portal'
+import { GuideModal } from '@/components/vet/guide-modal'
 
 export type ModuleKey =
   | 'dashboard'
@@ -27,11 +28,13 @@ export type ViewMode = 'staff' | 'client'
 export default function Home() {
   const [view, setView] = useState<ViewMode>('staff')
   const [active, setActive] = useState<ModuleKey>('dashboard')
+  const [guideOpen, setGuideOpen] = useState(false)
 
   if (view === 'client') {
     return (
       <div className="min-h-screen bg-muted/30">
         <ClientPortal view={view} onViewChange={setView} />
+        <GuideModal open={guideOpen} onOpenChange={setGuideOpen} />
       </div>
     )
   }
@@ -43,6 +46,7 @@ export default function Home() {
         onChange={setActive}
         view={view}
         onViewChange={setView}
+        onOpenGuide={() => setGuideOpen(true)}
       />
       <main className="flex-1 overflow-x-hidden">
         {active === 'dashboard' && <Dashboard onNavigate={setActive} />}
@@ -54,6 +58,7 @@ export default function Home() {
         {active === 'billing' && <BillingView />}
         {active === 'staff' && <StaffView />}
       </main>
+      <GuideModal open={guideOpen} onOpenChange={setGuideOpen} />
     </div>
   )
 }
