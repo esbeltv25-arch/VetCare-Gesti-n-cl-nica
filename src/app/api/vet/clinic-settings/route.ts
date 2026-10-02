@@ -19,13 +19,15 @@ export async function GET() {
     accentColor: settings.accentColor,
     darkMode: settings.darkMode,
     moduleLabels: JSON.parse(settings.moduleLabels || '{}'),
+    moduleLayout: JSON.parse(settings.moduleLayout || '{}'),
+    language: settings.language || 'es',
   })
 }
 
 // PUT /api/vet/clinic-settings — actualiza uno o más campos
 export async function PUT(req: NextRequest) {
   const body = await req.json()
-  const { brandName, brandSubtitle, primaryColor, accentColor, darkMode, moduleLabels } = body
+  const { brandName, brandSubtitle, primaryColor, accentColor, darkMode, moduleLabels, moduleLayout, language } = body
 
   // Asegurar que existe el singleton
   let settings = await db.clinicSettings.findUnique({ where: { id: 'singleton' } })
@@ -44,6 +46,10 @@ export async function PUT(req: NextRequest) {
       ...(moduleLabels !== undefined && {
         moduleLabels: typeof moduleLabels === 'string' ? moduleLabels : JSON.stringify(moduleLabels),
       }),
+      ...(moduleLayout !== undefined && {
+        moduleLayout: typeof moduleLayout === 'string' ? moduleLayout : JSON.stringify(moduleLayout),
+      }),
+      ...(language !== undefined && { language }),
     },
   })
 
@@ -55,5 +61,7 @@ export async function PUT(req: NextRequest) {
     accentColor: updated.accentColor,
     darkMode: updated.darkMode,
     moduleLabels: JSON.parse(updated.moduleLabels || '{}'),
+    moduleLayout: JSON.parse(updated.moduleLayout || '{}'),
+    language: updated.language || 'es',
   })
 }

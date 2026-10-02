@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { appointments, inventory } from '@/lib/vet-data'
 import { ViewSwitcher } from '@/components/vet/view-switcher'
-import { useClinicSettings, useApplyClinicSettings } from '@/lib/vet-clinic-hooks'
+import { useClinicSettings, useApplyClinicSettings, useTranslation } from '@/lib/vet-clinic-hooks'
 import type { ViewMode } from '@/app/page'
 
 interface SidebarProps {
@@ -52,6 +52,7 @@ const NAV_ITEMS = [
 export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide, onOpenSettings }: SidebarProps) {
   useApplyClinicSettings()
   const { data: settings } = useClinicSettings()
+  const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const todaysAppointments = appointments.filter(
@@ -117,7 +118,7 @@ export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide, onO
         {NAV_ITEMS.map(item => {
           const Icon = item.icon
           const isActive = active === item.key
-          const displayLabel = settings?.moduleLabels?.[item.key] || item.label
+          const displayLabel = settings?.moduleLabels?.[item.key] || t(`sidebar.${item.key}`)
           return (
             <button
               key={item.key}

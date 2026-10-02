@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -58,7 +58,7 @@ model Pet {
   hospitalizations  Hospitalization[]
 }
 
-// Singleton: personalización de la clínica (colores, nombre de marca, etiquetas, modo oscuro)
+// Singleton: personalización de la clínica (colores, nombre de marca, etiquetas, modo oscuro, layout, idioma)
 model ClinicSettings {
   id             String   @id @default("singleton")
   brandName      String   @default("VetCare")
@@ -67,6 +67,8 @@ model ClinicSettings {
   accentColor    String   @default("#7c3aed")  // violeta
   darkMode       Boolean  @default(false)
   moduleLabels   String   @default("{}")  // JSON overrides de etiquetas del sidebar
+  moduleLayout   String   @default("{}")  // JSON: {order: string[], hidden: string[]}
+  language       String   @default("es")  // idioma: es, en, fr, de, pt, pt-BR, it, ca
   updatedAt      DateTime @updatedAt
 }
 

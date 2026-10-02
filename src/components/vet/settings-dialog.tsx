@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useClinicSettings, useUpdateClinicSettings, DEFAULT_SETTINGS, type ClinicSettings } from '@/lib/vet-clinic-hooks'
+import { LANGUAGES, type Language } from '@/lib/i18n'
 
 interface SettingsDialogProps {
   open: boolean
@@ -87,6 +88,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     moduleLabels: {
       ...(settings?.moduleLabels || {}),
       ...(overrides.moduleLabels || {}),
+    },
+    moduleLayout: {
+      ...(settings?.moduleLayout || {}),
+      ...(overrides.moduleLayout || {}),
     },
   }
 
@@ -275,6 +280,36 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <p className="text-sm font-medium">Modo oscuro</p>
                 <p className="text-[11px] text-muted-foreground">Fondo oscuro, cómodo para guardias nocturnas</p>
               </button>
+            </div>
+          </section>
+
+          {/* Idioma */}
+          <section>
+            <h3 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+              🌍 Idioma de la aplicación
+            </h3>
+            <p className="text-[12px] text-muted-foreground mb-3">
+              Selecciona el idioma de toda la aplicación. Se aplica al instante.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {LANGUAGES.map(l => (
+                <button
+                  key={l.code}
+                  onClick={() => applySetting('language', l.code)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left transition-all',
+                    draft.language === l.code
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-border hover:bg-muted'
+                  )}
+                >
+                  <span className="text-xl">{l.flag}</span>
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-medium text-foreground truncate">{l.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{l.code}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </section>
 

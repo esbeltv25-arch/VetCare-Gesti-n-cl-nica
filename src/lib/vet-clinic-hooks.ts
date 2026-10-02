@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
+import { translate, type Language } from '@/lib/i18n'
 
 // ============================================================================
 // Tipos
@@ -15,6 +16,11 @@ export interface ClinicSettings {
   accentColor: string   // hex
   darkMode: boolean
   moduleLabels: Record<string, string>  // overrides de etiquetas del sidebar
+  moduleLayout: {
+    order?: string[]
+    hidden?: string[]
+  }
+  language: Language
 }
 
 const DEFAULT_SETTINGS: ClinicSettings = {
@@ -25,6 +31,8 @@ const DEFAULT_SETTINGS: ClinicSettings = {
   accentColor: '#7c3aed',
   darkMode: false,
   moduleLabels: {},
+  moduleLayout: {},
+  language: 'es',
 }
 
 // ============================================================================
@@ -98,15 +106,29 @@ export function useApplyClinicSettings() {
     // Aplicar colores como CSS variables
     root.style.setProperty('--clinic-primary', settings.primaryColor)
     root.style.setProperty('--clinic-accent', settings.accentColor)
+    // Aplicar idioma al documento
+    root.lang = settings.language || 'es'
     // Actualizar título del documento
     document.title = `${settings.brandName} · ${settings.brandSubtitle}`
   }, [settings])
 }
 
+// Hook de traducción: usa el idioma de los settings
+export function useTranslation() {
+  const { data: settings } = useClinicSettings()
+  const lang: Language = (settings?.language as Language) || 'es'
+  const t = (key: string): string => translate(key, lang)
+  return { t, lang }
+}
+
 // Helper para resolver etiqueta de módulo con override
 export function useModuleLabel(key: string, fallback: string): string {
   const { data: settings } = useClinicSettings()
-  return settings?.moduleLabels?.[key] || fallback
+  // Primero check override del usuario, luego traducción del idioma, luego fallback
+  if (settings?.moduleLabels?.[key]) return settings.moduleLabels[key]
+  const lang = (settings?.language as Language) || 'es'
+  const translated = translate(`sidebar.${key}`, lang)
+  return translated !== `sidebar.${key}` ? translated : fallback
 }
 
 export { DEFAULT_SETTINGS }
