@@ -225,3 +225,5 @@ Proyecto de demostración. Libre uso para fines educativos y de evaluación.
 ---
 
 **VetCare** — Hecho con Next.js, Prisma, TanStack Query, Recharts, @dnd-kit y z-ai-web-dev-sdk.
+
+Despliegue exitoso
