@@ -110,3 +110,142 @@ export function useModuleLabel(key: string, fallback: string): string {
 }
 
 export { DEFAULT_SETTINGS }
+
+// ============================================================================
+// Mutaciones de creación (botones "Nuevo X")
+// ============================================================================
+
+export function useCreatePet() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      name: string
+      species: string
+      breed: string
+      birthDate: string
+      weight?: number
+      sex?: string
+      microchip?: string
+      sterilized?: boolean
+      photoUrl?: string
+      allergies?: string[]
+      chronicConditions?: string[]
+      status?: string
+      clientId: string
+    }) => {
+      const res = await fetch('/api/vet/pets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Error al crear mascota')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vet', 'pets'] })
+      qc.invalidateQueries({ queryKey: ['vet', 'dashboard'] })
+    },
+  })
+}
+
+export function useCreateInventoryItem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      name: string
+      category: string
+      stock: number
+      minStock: number
+      unit?: string
+      expiryDate?: string
+      supplier?: string
+      price?: number
+      lot?: string
+    }) => {
+      const res = await fetch('/api/vet/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Error al crear producto')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vet', 'inventory'] })
+      qc.invalidateQueries({ queryKey: ['vet', 'dashboard'] })
+    },
+  })
+}
+
+export function useCreateVet() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      name: string
+      role: string
+      specialty?: string
+      phone?: string
+      email?: string
+      shift?: string
+      avatarColor?: string
+    }) => {
+      const res = await fetch('/api/vet/vets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Error al crear empleado')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vet', 'vets'] })
+      qc.invalidateQueries({ queryKey: ['vet', 'dashboard'] })
+    },
+  })
+}
+
+export function useCreateInvoice() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      number: string
+      clientId: string
+      petId: string
+      date?: string
+      status?: string
+      paymentMethod?: string
+      items: Array<{ description: string; qty: number; unitPrice: number }>
+    }) => {
+      const res = await fetch('/api/vet/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Error al crear factura')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vet', 'invoices'] })
+      qc.invalidateQueries({ queryKey: ['vet', 'dashboard'] })
+    },
+  })
+}
+
+export function useUpdateInvoice() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { id: string; status?: string; paymentMethod?: string }) => {
+      const res = await fetch('/api/vet/invoices', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Error al actualizar factura')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vet', 'invoices'] })
+      qc.invalidateQueries({ queryKey: ['vet', 'dashboard'] })
+    },
+  })
+}

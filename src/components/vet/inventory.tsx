@@ -19,6 +19,7 @@ import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
 import { useInventory } from '@/lib/vet-hooks'
 import { formatCurrency, formatDate, daysUntil } from '@/lib/vet-data'
+import { NewInventoryItemDialog } from '@/components/vet/new-entity-dialogs'
 
 const CATEGORIES = ['Todos', 'Medicamento', 'Alimento', 'Insumo médico', 'Accesorio', 'Higiene'] as const
 
@@ -35,6 +36,7 @@ export function InventoryView() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<typeof CATEGORIES[number]>('Todos')
   const [showLowStockOnly, setShowLowStockOnly] = useState(false)
+  const [showNewItem, setShowNewItem] = useState(false)
 
   const filtered = useMemo(() => {
     return inventory.filter(item => {
@@ -83,7 +85,7 @@ export function InventoryView() {
 
   return (
     <div>
-      <Topbar title="Inventario" subtitle="Control de stock, medicamentos y suministros" actionLabel="Nuevo producto" />
+      <Topbar moduleKey="inventory" title="Inventario" subtitle="Control de stock, medicamentos y suministros" actionLabel="Nuevo producto" onAction={() => setShowNewItem(true)} />
 
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -265,6 +267,8 @@ export function InventoryView() {
           </CardContent>
         </Card>
       </div>
+
+      <NewInventoryItemDialog open={showNewItem} onOpenChange={setShowNewItem} />
     </div>
   )
 }

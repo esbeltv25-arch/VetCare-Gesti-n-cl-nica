@@ -22,6 +22,9 @@ import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
 import { useInvoices, useClients, usePets } from '@/lib/vet-hooks'
 import { formatCurrency, formatDate } from '@/lib/vet-data'
+import { NewInvoiceDialog } from '@/components/vet/new-entity-dialogs'
+import { useUpdateInvoice } from '@/lib/vet-clinic-hooks'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -50,6 +53,7 @@ export function BillingView() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_FILTERS[number]>('Todos')
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  const [showNewInvoice, setShowNewInvoice] = useState(false)
 
   const filtered = useMemo(() => {
     return invoices.filter(inv => {
@@ -96,7 +100,7 @@ export function BillingView() {
 
   return (
     <div>
-      <Topbar title="Facturación" subtitle="Gestión de facturas y cobros" actionLabel="Nueva factura" />
+      <Topbar moduleKey="billing" title="Facturación" subtitle="Gestión de facturas y cobros" actionLabel="Nueva factura" onAction={() => setShowNewInvoice(true)} />
 
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -234,6 +238,7 @@ export function BillingView() {
 
 function InvoiceDetail({ invoiceId, invoices, clients, pets }: { invoiceId: string; invoices: any[]; clients: any[]; pets: any[] }) {
   const inv = invoices.find(i => i.id === invoiceId)
+  const markPaid = useUpdateInvoice()
   if (!inv) return null
   const client = clients.find(c => c.id === inv.clientId)
   const pet = pets.find(p => p.id === inv.petId)
@@ -298,12 +303,27 @@ function InvoiceDetail({ invoiceId, invoices, clients, pets }: { invoiceId: stri
 
         <div className="flex gap-2">
           {inv.status !== 'Pagada' && (
-            <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              onClick={async () => {
+                try {
+                  await markPaid.mutateAsync({ id: inv.id, status: 'Pagada', paymentMethod: 'Tarjeta' })
+                  toast.success(`Factura ${inv.number} marcada como pagada`)
+                } catch (e: any) {
+                  toast.error('Error: ' + e.message)
+                }
+              }}
+              disabled={markPaid.isPending}
+            >
               <Check className="h-4 w-4" />
-              Marcar como pagada
+              {markPaid.isPending ? 'Marcando...' : 'Marcar como pagada'}
             </Button>
           )}
-          <Button variant="outline" className="flex-1">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => toast.info(`PDF de la factura ${inv.number} en desarrollo — usa el botón "Imprimir" del navegador (Ctrl+P) mientras tanto`)}
+          >
             <Receipt className="h-4 w-4" />
             Descargar PDF
           </Button>
@@ -314,6 +334,13 @@ function InvoiceDetail({ invoiceId, invoices, clients, pets }: { invoiceId: stri
           )}
         </div>
       </div>
+
+      <NewInvoiceDialog
+        open={showNewInvoice}
+        onOpenChange={setShowNewInvoice}
+        clients={clients}
+        pets={pets}
+      />
     </div>
   )
 }

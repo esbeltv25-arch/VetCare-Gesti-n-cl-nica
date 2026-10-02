@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
 import { useVets } from '@/lib/vet-hooks'
+import { NewVetDialog } from '@/components/vet/new-entity-dialogs'
 
 const ROLE_FILTERS = ['Todos', 'Veterinario', 'Recepción', 'Peluquería', 'Administrador', 'Auxiliar'] as const
 
@@ -40,6 +41,7 @@ export function StaffView() {
   const { data: vets = [], isLoading } = useVets()
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<typeof ROLE_FILTERS[number]>('Todos')
+  const [showNewVet, setShowNewVet] = useState(false)
 
   const filtered = useMemo(() => {
     return vets.filter(v => {
@@ -83,7 +85,7 @@ export function StaffView() {
 
   return (
     <div>
-      <Topbar title="Personal" subtitle="Equipo de la clínica" actionLabel="Nuevo empleado" />
+      <Topbar moduleKey="staff" title="Personal" subtitle="Equipo de la clínica" actionLabel="Nuevo empleado" onAction={() => setShowNewVet(true)} />
 
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -199,6 +201,8 @@ export function StaffView() {
           })}
         </div>
       </div>
+
+      <NewVetDialog open={showNewVet} onOpenChange={setShowNewVet} />
     </div>
   )
 }

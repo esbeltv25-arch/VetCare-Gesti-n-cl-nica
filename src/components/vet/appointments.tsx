@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Topbar } from '@/components/vet/topbar'
+import { NewAppointmentDialog } from '@/components/vet/new-entity-dialogs'
 import { cn } from '@/lib/utils'
 import { useAppointments, useUpdateAppointment, usePets, useClients, useVets } from '@/lib/vet-hooks'
 import type { Appointment } from '@/lib/vet-data'
@@ -52,6 +53,7 @@ export function AppointmentsView() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [showNewAppointment, setShowNewAppointment] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -136,7 +138,7 @@ export function AppointmentsView() {
 
   return (
     <div>
-      <Topbar title="Agenda" subtitle="Arrastra citas para reprogramar" actionLabel="Nuevo turno" />
+      <Topbar moduleKey="appointments" title="Agenda" subtitle="Arrastra citas para reprogramar" actionLabel="Nuevo turno" onAction={() => setShowNewAppointment(true)} />
 
       <div className="p-6 space-y-4">
         {/* View toggle + navigation */}
@@ -311,6 +313,14 @@ export function AppointmentsView() {
           </CardContent>
         </Card>
       </div>
+
+      <NewAppointmentDialog
+        open={showNewAppointment}
+        onOpenChange={setShowNewAppointment}
+        pets={pets}
+        clients={clients}
+        vets={vets}
+      />
     </div>
   )
 }

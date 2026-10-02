@@ -17,6 +17,7 @@ import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
 import { useClients, usePets, useInvoices } from '@/lib/vet-hooks'
 import { formatDate, formatCurrency } from '@/lib/vet-data'
+import { NewClientDialog } from '@/components/vet/new-entity-dialogs'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export function ClientsView() {
   const { data: invoices = [] } = useInvoices()
   const [search, setSearch] = useState('')
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const [showNewClient, setShowNewClient] = useState(false)
 
   const filtered = useMemo(() => {
     return clients.filter(c =>
@@ -41,7 +43,7 @@ export function ClientsView() {
 
   return (
     <div>
-      <Topbar title="Clientes" subtitle={`${clients.length} dueños registrados`} actionLabel="Nuevo cliente" />
+      <Topbar moduleKey="clients" title="Clientes" subtitle={`${clients.length} dueños registrados`} actionLabel="Nuevo cliente" onAction={() => setShowNewClient(true)} />
 
       <div className="p-6 space-y-4">
         <Card>
@@ -270,6 +272,8 @@ function ClientDetail({
           </p>
         </div>
       </div>
+
+      <NewClientDialog open={showNewClient} onOpenChange={setShowNewClient} />
     </div>
   )
 }

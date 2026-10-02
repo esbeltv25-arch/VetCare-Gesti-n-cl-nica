@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -46,6 +46,7 @@ model Pet {
   galleryPhotos     String      @default("[]")  // JSON array de base64 strings
   allergies         String      @default("[]")
   chronicConditions String      @default("[]")
+  customFields      String      @default("[]")  // JSON: [{label, value}]
   status            String      @default("Sano")
   lastVisit         DateTime?
   client            Client      @relation(fields: [clientId], references: [id])

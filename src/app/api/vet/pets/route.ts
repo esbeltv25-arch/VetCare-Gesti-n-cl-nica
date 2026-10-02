@@ -62,3 +62,59 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ ok: true, id: updated.id })
 }
+
+// POST /api/vet/pets — crear nueva mascota
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { name, species, breed, birthDate, weight, sex, microchip, sterilized, photoUrl, allergies, chronicConditions, status, clientId } = body
+
+  if (!name || !species || !breed || !birthDate || !clientId) {
+    return NextResponse.json(
+      { error: 'name, species, breed, birthDate y clientId son requeridos' },
+      { status: 400 }
+    )
+  }
+
+  const created = await db.pet.create({
+    data: {
+      id: `p${Date.now()}`,
+      name,
+      species,
+      breed,
+      birthDate: new Date(birthDate),
+      weight: Number(weight) || 0,
+      sex: sex || 'M',
+      microchip: microchip || '',
+      sterilized: sterilized || false,
+      photoUrl: photoUrl || 'https://images.unsplash.com/photo-1518717758536-3a9c8f3a4d3b?w=400&h=400&fit=crop',
+      allergies: JSON.stringify(allergies || []),
+      chronicConditions: JSON.stringify(chronicConditions || []),
+      customFields: '[]',
+      galleryPhotos: '[]',
+      status: status || 'Sano',
+      clientId,
+    },
+    include: { client: true },
+  })
+
+  return NextResponse.json({
+    id: created.id,
+    name: created.name,
+    species: created.species,
+    breed: created.breed,
+    birthDate: created.birthDate.toISOString(),
+    weight: created.weight,
+    sex: created.sex,
+    microchip: created.microchip,
+    sterilized: created.sterilized,
+    photoUrl: created.photoUrl,
+    galleryPhotos: JSON.parse(created.galleryPhotos || '[]'),
+    allergies: JSON.parse(created.allergies || '[]'),
+    chronicConditions: JSON.parse(created.chronicConditions || '[]'),
+    customFields: JSON.parse(created.customFields || '[]'),
+    status: created.status,
+    lastVisit: created.lastVisit?.toISOString(),
+    clientId: created.clientId,
+    vaccines: [],
+  }, { status: 201 })
+}

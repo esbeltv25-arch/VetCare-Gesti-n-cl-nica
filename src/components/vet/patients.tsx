@@ -39,6 +39,7 @@ import { usePets, useClients, useAppointments } from '@/lib/vet-hooks'
 import type { Pet, Client, Appointment } from '@/lib/vet-data'
 import { calculateAge, formatDate, daysUntil } from '@/lib/vet-data'
 import { PetGallery } from '@/components/vet/pet-gallery'
+import { NewPetDialog } from '@/components/vet/new-entity-dialogs'
 
 const STATUS_STYLES: Record<string, string> = {
   'Sano': 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -64,6 +65,7 @@ export function PatientsView() {
   const [speciesFilter, setSpeciesFilter] = useState<typeof SPECIES_FILTERS[number]>('Todos')
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_FILTERS[number]>('Todos')
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
+  const [showNewPet, setShowNewPet] = useState(false)
 
   const filtered = useMemo(() => {
     return pets.filter(p => {
@@ -93,7 +95,7 @@ export function PatientsView() {
 
   return (
     <div>
-      <Topbar title="Pacientes" subtitle={`${pets.length} mascotas registradas`} actionLabel="Nuevo paciente" />
+      <Topbar moduleKey="patients" title="Pacientes" subtitle={`${pets.length} mascotas registradas`} actionLabel="Nuevo paciente" onAction={() => setShowNewPet(true)} />
 
       <div className="p-6 space-y-4">
         <Card>
@@ -198,6 +200,12 @@ export function PatientsView() {
           )}
         </DialogContent>
       </Dialog>
+
+      <NewPetDialog
+        open={showNewPet}
+        onOpenChange={setShowNewPet}
+        clients={clients}
+      />
     </div>
   )
 }
