@@ -104,7 +104,7 @@ export function PatientsView() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre o raza..."
+                placeholder={t("patients.searchByName")}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="pl-9"
@@ -289,7 +289,7 @@ function PetDetail({ pet, client }: { pet: Pet; client: Client | null }) {
                 <AlertCircle className="h-4 w-4 text-amber-500" /> Alergias
               </h3>
               {pet.allergies.length === 0 ? (
-                <p className="text-[12px] text-muted-foreground">Sin alergias registradas</p>
+                <p className="text-[12px] text-muted-foreground">{t("patients.noAllergies")}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {pet.allergies.map(a => (
@@ -303,7 +303,7 @@ function PetDetail({ pet, client }: { pet: Pet; client: Client | null }) {
                 <Activity className="h-4 w-4 text-rose-500" /> Condiciones crónicas
               </h3>
               {pet.chronicConditions.length === 0 ? (
-                <p className="text-[12px] text-muted-foreground">Sin condiciones registradas</p>
+                <p className="text-[12px] text-muted-foreground">{t("patients.noConditions")}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {pet.chronicConditions.map(c => (
@@ -322,7 +322,7 @@ function PetDetail({ pet, client }: { pet: Pet; client: Client | null }) {
               <Syringe className="h-4 w-4 text-emerald-600" /> Cartilla de vacunación
             </h3>
             {pet.vaccines.length === 0 ? (
-              <p className="text-[12px] text-muted-foreground">Sin vacunas registradas</p>
+              <p className="text-[12px] text-muted-foreground">{t("patients.noConsultations")}</p>
             ) : (
               <ul className="space-y-1.5">
                 {pet.vaccines.map(v => {
@@ -363,7 +363,7 @@ function PetDetail({ pet, client }: { pet: Pet; client: Client | null }) {
             <Calendar className="h-4 w-4 text-violet-600" /> Historial clínico reciente
           </h3>
           {history.length === 0 ? (
-            <p className="text-[12px] text-muted-foreground">Sin consultas previas</p>
+            <p className="text-[12px] text-muted-foreground">{t("patients.noConsultations")}</p>
           ) : (
             <ul className="space-y-2">
               {history.map(apt => (

@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { useClinicSettings, useUpdateClinicSettings, DEFAULT_SETTINGS, type ClinicSettings } from '@/lib/vet-clinic-hooks'
+import { useClinicSettings, useUpdateClinicSettings, DEFAULT_SETTINGS, type ClinicSettings, useTranslation } from '@/lib/vet-clinic-hooks'
 import { LANGUAGES, type Language } from '@/lib/i18n'
 
 interface SettingsDialogProps {
@@ -65,7 +65,7 @@ const DEFAULT_MODULE_LABELS: Record<string, string> = {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { data: settings } = useClinicSettings()
+  const { data: settings } = useClinicSettings(); const { t } = useTranslation()
   const update = useUpdateClinicSettings()
 
   // Estado local solo para overrides; si no hay override, usar settings del server

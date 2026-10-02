@@ -49,7 +49,7 @@ export function TelemedicineCall({ petId, clientId, onClose }: TelemedicineCallP
   const { data: appointments = [] } = useAppointments()
 
   const pet = pets.find(p => p.id === petId)
-  const vet = vets.find(v => v.role === 'Veterinario' && v.active) || vets[0]
+  const vet = vets.find(v => v.role === t('role.veterinario') && v.active) || vets[0]
 
   const [seconds, setSeconds] = useState(0)
   const [micOn, setMicOn] = useState(true)

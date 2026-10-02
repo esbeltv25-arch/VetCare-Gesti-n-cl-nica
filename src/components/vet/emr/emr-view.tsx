@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState } from 'react'
 import {
   Stethoscope,
@@ -32,6 +33,7 @@ const SPECIES_ICON: Record<string, any> = {
 
 export function EmrView() {
   const { data: pets = [] } = usePets()
+  const { t } = useTranslation()
   const { data: vets = [] } = useVets()
   const [search, setSearch] = useState('')
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null)

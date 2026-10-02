@@ -128,16 +128,16 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
     }
 
     dashboard.criticalPets?.forEach((pet: any) => {
-      const statusKey = pet.status === 'Crítico' ? 'status.critical' : 'status.treatment'
+      const statusKey = pet.status === t('status.critical') ? 'status.critical' : 'status.treatment'
       const statusLabel = t(statusKey)
       notifications.push({
         id: `pet-${pet.id}`,
         icon: AlertTriangle,
-        color: pet.status === 'Crítico' ? 'text-rose-600' : 'text-amber-600',
-        bgColor: pet.status === 'Crítico' ? 'bg-rose-50' : 'bg-amber-50',
+        color: pet.status === t('status.critical') ? 'text-rose-600' : 'text-amber-600',
+        bgColor: pet.status === t('status.critical') ? 'bg-rose-50' : 'bg-amber-50',
         title: `${pet.name} — ${statusLabel}`,
         description: t('dashboard.criticalPatients'),
-        severity: pet.status === 'Crítico' ? 'critical' : 'warning',
+        severity: pet.status === t('status.critical') ? 'critical' : 'warning',
         module: 'patients',
       })
     })

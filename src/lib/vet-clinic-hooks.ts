@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { translate, type Language } from '@/lib/i18n'
+import { translate, type Language, trStatus, trSpecies, trRole, trCategory, trApptType, trShift } from '@/lib/i18n'
 
 // ============================================================================
 // Tipos
@@ -118,7 +118,7 @@ export function useTranslation() {
   const { data: settings } = useClinicSettings()
   const lang: Language = (settings?.language as Language) || 'es'
   const t = (key: string): string => translate(key, lang)
-  return { t, lang }
+  return { t, lang, trStatus: (s: string) => trStatus(s, lang), trSpecies: (s: string) => trSpecies(s, lang), trRole: (s: string) => trRole(s, lang), trCategory: (s: string) => trCategory(s, lang), trApptType: (s: string) => trApptType(s, lang), trShift: (s: string) => trShift(s, lang) }
 }
 
 // Helper para resolver etiqueta de módulo con override

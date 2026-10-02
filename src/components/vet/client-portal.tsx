@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 // Portal del cliente: login mock, dashboard de mascotas, cartillas de vacunación y acceso a telemedicina
 import { useState, useMemo } from 'react'
 import {
@@ -61,6 +62,7 @@ const TYPE_STYLES: Record<string, string> = {
 
 export function ClientPortal({ view, onViewChange }: ClientPortalProps) {
   const { data: clients = [] } = useClients()
+  const { t } = useTranslation()
   const [clientId, setClientId] = useState<string | null>(null)
   const [email, setEmail] = useState('')
 
@@ -156,6 +158,7 @@ function ClientDashboard({
   onViewChange: (v: ViewMode) => void
 }) {
   const { data: clients = [] } = useClients()
+  const { t } = useTranslation()
   const { data: pets = [] } = usePets()
   const { data: appointments = [] } = useAppointments()
   const { data: vets = [] } = useVets()
@@ -195,7 +198,7 @@ function ClientDashboard({
           </div>
           <Button variant="ghost" size="sm" onClick={onLogout} className="text-muted-foreground">
             <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Salir</span>
+            <span className="hidden sm:inline">{t("portal.signOut")}</span>
           </Button>
         </div>
       </header>
@@ -228,7 +231,7 @@ function ClientDashboard({
               </div>
               <div>
                 <p className="text-xl font-bold text-foreground">{upcomingAppts.length}</p>
-                <p className="text-[12px] text-muted-foreground">Próximas citas</p>
+                <p className="text-[12px] text-muted-foreground">{t("portal.upcoming")}</p>
               </div>
             </CardContent>
           </Card>

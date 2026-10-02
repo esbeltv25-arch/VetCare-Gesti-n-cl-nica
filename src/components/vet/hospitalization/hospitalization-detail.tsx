@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useHospitalization, useAddShiftLog, useDischargeHospitalization, type ShiftLogType, type ShiftLog } from '@/lib/vet-hospitalization-hooks'
 import { useVets } from '@/lib/vet-hooks'
 import { HandoverDialog } from '@/components/vet/hospitalization/handover-dialog'
@@ -56,6 +57,7 @@ export function HospitalizationDetail({ id, onBack }: HospitalizationDetailProps
   const { data: vets = [] } = useVets()
   const addLog = useAddShiftLog()
   const discharge = useDischargeHospitalization()
+  const { t } = useTranslation()
   const [showHandover, setShowHandover] = useState(false)
 
   // Default reporter = first active vet (mock current user)

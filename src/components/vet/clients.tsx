@@ -52,7 +52,7 @@ export function ClientsView() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre, email o teléfono..."
+                placeholder={t("clients.searchByName")}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="pl-9"
@@ -70,7 +70,7 @@ export function ClientsView() {
             {filtered.map(client => {
               const clientPets = pets.filter(p => p.clientId === client.id)
               const clientInvoices = invoices.filter(i => i.clientId === client.id)
-              const totalSpent = clientInvoices.filter(i => i.status === 'Pagada').reduce((sum, i) => sum + i.total, 0)
+              const totalSpent = clientInvoices.filter(i => i.status === t('bill.statusPaid')).reduce((sum, i) => sum + i.total, 0)
               return (
                 <Card
                   key={client.id}
@@ -102,15 +102,15 @@ export function ClientsView() {
 
                     <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3">
                       <div>
-                        <p className="text-[10px] uppercase text-muted-foreground">Mascotas</p>
+                        <p className="text-[10px] uppercase text-muted-foreground">{t("clients.pets")}</p>
                         <p className="text-sm font-semibold text-foreground">{clientPets.length}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase text-muted-foreground">Puntos</p>
+                        <p className="text-[10px] uppercase text-muted-foreground">{t("clients.points")}</p>
                         <p className="text-sm font-semibold text-amber-600">{client.loyaltyPoints}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase text-muted-foreground">Gastado</p>
+                        <p className="text-[10px] uppercase text-muted-foreground">{t("clients.spent")}</p>
                         <p className="text-sm font-semibold text-emerald-600">{formatCurrency(totalSpent)}</p>
                       </div>
                     </div>
@@ -240,9 +240,9 @@ function ClientDetail({
                       <td className="px-3 py-2 text-right">
                         <Badge variant="outline" className={cn(
                           'text-[10px]',
-                          inv.status === 'Pagada' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                          inv.status === 'Pendiente' && 'bg-amber-50 text-amber-700 border-amber-200',
-                          inv.status === 'Vencida' && 'bg-rose-50 text-rose-700 border-rose-200',
+                          inv.status === t('bill.statusPaid') && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                          inv.status === t('status.pending') && 'bg-amber-50 text-amber-700 border-amber-200',
+                          inv.status === t('bill.statusOverdue') && 'bg-rose-50 text-rose-700 border-rose-200',
                         )}>
                           {inv.status}
                         </Badge>
@@ -258,7 +258,7 @@ function ClientDetail({
         <div className="rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Award className="h-5 w-5 text-amber-500" />
-            <span className="text-sm font-semibold text-amber-700">Programa de fidelización</span>
+            <span className="text-sm font-semibold text-amber-700">{t("clients.loyaltyProgram")}</span>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-amber-700">{client.loyaltyPoints}</span>

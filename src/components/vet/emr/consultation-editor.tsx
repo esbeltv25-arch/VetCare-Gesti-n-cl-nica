@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Topbar } from '@/components/vet/topbar'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import {
   useConsultations,
   useSaveConsultation,
@@ -63,6 +64,7 @@ export function ConsultationEditor({ pet, vet, onBack }: ConsultationEditorProps
   const autosave = useAutosaveConsultation()
   const diagnosisMutation = useAIDiagnosis()
   const soapMutation = useAISoapDraft()
+  const { t } = useTranslation()
 
   const [consultationId, setConsultationId] = useState<string | null>(null)
   const [reason, setReason] = useState('')

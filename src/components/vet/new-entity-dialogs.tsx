@@ -15,6 +15,7 @@ import {
   useCreateInvoice,
 } from '@/lib/vet-clinic-hooks'
 import { useCreateClient, useCreateAppointment } from '@/lib/vet-hooks'
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 
 const AVATAR_COLORS = [
   'bg-rose-100 text-rose-700',
@@ -29,6 +30,7 @@ const AVATAR_COLORS = [
 
 export function NewClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const create = useCreateClient()
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
@@ -79,7 +81,7 @@ export function NewClientDialog({ open, onOpenChange }: { open: boolean; onOpenC
             <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="C/ Mayor 12, Madrid" />
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? 'Creando...' : 'Crear cliente'}
             </Button>
@@ -112,6 +114,7 @@ export function NewPetDialog({
   clients: Array<{ id: string; name: string }>
 }) {
   const create = useCreatePet()
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [species, setSpecies] = useState('Perro')
   const [breed, setBreed] = useState('')
@@ -244,7 +247,7 @@ export function NewPetDialog({
             <Input value={chronicConditions} onChange={e => setChronicConditions(e.target.value)} placeholder="Displasia de cadera" />
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? 'Creando...' : 'Crear paciente'}
             </Button>
@@ -263,6 +266,7 @@ const CATEGORIES = ['Medicamento', 'Alimento', 'Insumo médico', 'Accesorio', 'H
 
 export function NewInventoryItemDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const create = useCreateInventoryItem()
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [category, setCategory] = useState('Medicamento')
   const [stock, setStock] = useState('')
@@ -355,7 +359,7 @@ export function NewInventoryItemDialog({ open, onOpenChange }: { open: boolean; 
             <Input value={supplier} onChange={e => setSupplier(e.target.value)} placeholder="MSD Animal Health" />
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? 'Creando...' : 'Crear producto'}
             </Button>
@@ -375,6 +379,7 @@ const SHIFTS = ['Mañana', 'Tarde', 'Completo']
 
 export function NewVetDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const create = useCreateVet()
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [role, setRole] = useState('Veterinario')
   const [specialty, setSpecialty] = useState('')
@@ -453,7 +458,7 @@ export function NewVetDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             </div>
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? 'Creando...' : 'Crear empleado'}
             </Button>
@@ -483,6 +488,7 @@ export function NewInvoiceDialog({
   pets: Array<{ id: string; name: string; clientId: string }>
 }) {
   const create = useCreateInvoice()
+  const { t } = useTranslation()
   const [clientId, setClientId] = useState('')
   const [petId, setPetId] = useState('')
   const [status, setStatus] = useState('Pendiente')
@@ -638,7 +644,7 @@ export function NewInvoiceDialog({
           </div>
 
           <div className="flex gap-2 pt-2 border-t border-border">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? 'Creando...' : 'Crear factura'}
             </Button>
@@ -669,6 +675,7 @@ export function NewAppointmentDialog({
   vets: Array<{ id: string; name: string; role: string; active: boolean }>
 }) {
   const create = useCreateAppointment()
+  const { t } = useTranslation()
   const [petId, setPetId] = useState('')
   const [vetId, setVetId] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -784,7 +791,7 @@ export function NewAppointmentDialog({
             </select>
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? 'Creando...' : 'Crear turno'}
             </Button>

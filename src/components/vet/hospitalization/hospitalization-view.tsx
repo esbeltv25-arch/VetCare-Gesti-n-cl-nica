@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState } from 'react'
 import {
   BedDouble,
@@ -37,6 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function HospitalizationView() {
   const { data: hospitalizations = [], isLoading, isFetching, dataUpdatedAt } = useHospitalizations('active')
+  const { t } = useTranslation()
   const { data: pets = [] } = usePets()
   const { data: vets = [] } = useVets()
   const [search, setSearch] = useState('')

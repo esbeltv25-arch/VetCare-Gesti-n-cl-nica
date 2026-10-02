@@ -1286,3 +1286,80 @@ export const translations: Record<Language, Dict> = {
 export function translate(key: string, lang: Language = 'es'): string {
   return translations[lang]?.[key] || translations.es[key] || key
 }
+
+// ============================================================================
+// HELPERS — traducen valores dinámicos (estados, especies, roles, etc.)
+// ============================================================================
+
+export function trStatus(status: string, lang: Language = 'es'): string {
+  const map: Record<string, string> = {
+    'Sano': translate('status.healthy', lang),
+    'En tratamiento': translate('status.treatment', lang),
+    'Crítico': translate('status.critical', lang),
+    'En observación': translate('status.observation', lang),
+    'Confirmada': translate('status.confirmed', lang),
+    'Pendiente': translate('status.pending', lang),
+    'Cancelada': translate('status.cancelled', lang),
+    'Completada': translate('status.completed', lang),
+    'Pagada': translate('bill.statusPaid', lang),
+    'Vencida': translate('bill.statusOverdue', lang),
+    'active': translate('status.active', lang),
+    'observation': translate('hosp.statusObservation', lang),
+    'discharged': translate('hosp.statusDischarged', lang),
+  }
+  return map[status] || status
+}
+
+export function trSpecies(species: string, lang: Language = 'es'): string {
+  const map: Record<string, string> = {
+    'Perro': translate('species.perro', lang),
+    'Gato': translate('species.gato', lang),
+    'Conejo': translate('species.conejo', lang),
+    'Ave': translate('species.ave', lang),
+    'Reptil': translate('species.reptil', lang),
+  }
+  return map[species] || species
+}
+
+export function trRole(role: string, lang: Language = 'es'): string {
+  const map: Record<string, string> = {
+    'Veterinario': translate('role.veterinario', lang),
+    'Recepción': translate('role.recepcion', lang),
+    'Peluquería': translate('role.peluqueria', lang),
+    'Administrador': translate('role.administrador', lang),
+    'Auxiliar': translate('role.auxiliar', lang),
+  }
+  return map[role] || role
+}
+
+export function trCategory(cat: string, lang: Language = 'es'): string {
+  const map: Record<string, string> = {
+    'Medicamento': translate('cat.medicamento', lang),
+    'Alimento': translate('cat.alimento', lang),
+    'Insumo médico': translate('cat.insumo', lang),
+    'Accesorio': translate('cat.accesorio', lang),
+    'Higiene': translate('cat.higiene', lang),
+  }
+  return map[cat] || cat
+}
+
+export function trApptType(type: string, lang: Language = 'es'): string {
+  const map: Record<string, string> = {
+    'Consulta': translate('appointments.types.consulta', lang),
+    'Vacunación': translate('appointments.types.vacunacion', lang),
+    'Cirugía': translate('appointments.types.cirugia', lang),
+    'Control': translate('appointments.types.control', lang),
+    'Urgencia': translate('appointments.types.urgencia', lang),
+    'Peluquería': translate('appointments.types.peluqueria', lang),
+  }
+  return map[type] || type
+}
+
+export function trShift(shift: string, lang: Language = 'es'): string {
+  const map: Record<string, string> = {
+    'Mañana': translate('staff.morning', lang),
+    'Tarde': translate('staff.afternoon', lang),
+    'Completo': translate('staff.fullDay', lang),
+  }
+  return map[shift] || shift
+}

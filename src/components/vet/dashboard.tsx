@@ -330,7 +330,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base">{t("dashboard.revenueEvolution")}</CardTitle>
-                  <CardDescription className="text-xs">Últimos 6 meses</CardDescription>
+                  <CardDescription className="text-xs">{t("dashboard.last6Months")}</CardDescription>
                 </div>
                 <div className="flex items-center gap-1 text-emerald-600">
                   <TrendingUp className="h-4 w-4" />
@@ -373,7 +373,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{t("dashboard.bySpecies")}</CardTitle>
-              <CardDescription className="text-xs">Distribución de pacientes</CardDescription>
+              <CardDescription className="text-xs">{t("dashboard.speciesDistribution")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-48">
@@ -407,7 +407,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Card className="lg:col-span-2">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{t("dashboard.apptsByWeekday")}</CardTitle>
-              <CardDescription className="text-xs">Distribución semanal</CardDescription>
+              <CardDescription className="text-xs">{t("dashboard.weeklyDistribution")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-56">
@@ -431,7 +431,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{t("dashboard.teamActivity")}</CardTitle>
-              <CardDescription className="text-xs">Citas hoy por veterinario</CardDescription>
+              <CardDescription className="text-xs">{t('dashboard.apptsTodayByVet')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.activeVets.map(vet => {

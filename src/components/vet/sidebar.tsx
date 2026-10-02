@@ -56,7 +56,7 @@ export function Sidebar({ active, onChange, view, onViewChange, onOpenGuide, onO
   const [collapsed, setCollapsed] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const todaysAppointments = appointments.filter(
-    a => a.date === today && a.status === 'Confirmada'
+    a => a.date === today && a.status === t('status.confirmed')
   ).length
   const lowStockItems = inventory.filter(i => i.stock <= i.minStock).length
 
