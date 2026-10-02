@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState, useMemo } from 'react'
 import {
   Search,
@@ -38,7 +39,7 @@ const SHIFT_STYLES: Record<string, string> = {
 }
 
 export function StaffView() {
-  const { data: vets = [], isLoading } = useVets()
+  const { data: vets = [], isLoading } = useVets(); const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<typeof ROLE_FILTERS[number]>('Todos')
   const [showNewVet, setShowNewVet] = useState(false)
@@ -85,7 +86,7 @@ export function StaffView() {
 
   return (
     <div>
-      <Topbar moduleKey="staff" title="Personal" subtitle="Equipo de la clínica" actionLabel="Nuevo empleado" onAction={() => setShowNewVet(true)} />
+      <Topbar moduleKey="staff" title="Personal" subtitle={t("staff.subtitle")} actionLabel="Nuevo empleado" onAction={() => setShowNewVet(true)} />
 
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

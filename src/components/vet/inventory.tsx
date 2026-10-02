@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState, useMemo } from 'react'
 import {
   Search,
@@ -32,7 +33,7 @@ const CATEGORY_STYLES: Record<string, string> = {
 }
 
 export function InventoryView() {
-  const { data: inventory = [], isLoading } = useInventory()
+  const { data: inventory = [], isLoading } = useInventory(); const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<typeof CATEGORIES[number]>('Todos')
   const [showLowStockOnly, setShowLowStockOnly] = useState(false)
@@ -85,7 +86,7 @@ export function InventoryView() {
 
   return (
     <div>
-      <Topbar moduleKey="inventory" title="Inventario" subtitle="Control de stock, medicamentos y suministros" actionLabel="Nuevo producto" onAction={() => setShowNewItem(true)} />
+      <Topbar moduleKey="inventory" title="Inventario" subtitle={t("inv.subtitle")} actionLabel="Nuevo producto" onAction={() => setShowNewItem(true)} />
 
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

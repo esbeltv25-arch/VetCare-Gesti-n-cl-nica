@@ -1,4 +1,5 @@
 'use client'
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 
 import {
   Dog,
@@ -60,14 +61,14 @@ const TYPE_ICONS: Record<string, string> = {
 const SPECIES_PIE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#0ea5e9', '#ec4899']
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { data, isLoading } = useDashboard()
+  const { data, isLoading } = useDashboard(); const { t } = useTranslation()
   const { data: pets } = usePets()
   const { data: clients } = useClients()
 
   if (isLoading || !data) {
     return (
       <div>
-        <Topbar title="Dashboard" subtitle="Resumen general de la clínica" actionLabel="Nueva cita" onAction={() => onNavigate('appointments')} />
+        <Topbar title="Dashboard" subtitle={t("dashboard.subtitle")} actionLabel={t("topbar.newAppointment")}  onAction={() => onNavigate('appointments')} />
         <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32" />)}
         </div>
@@ -82,7 +83,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const kpis = data.kpis
   const kpiData = [
     {
-      label: 'Pacientes activos',
+      label: t('dashboard.activePatients'),
       value: kpis.pets,
       change: pets && pets.length > 8 ? `+${pets.length - 8} este mes` : 'Estable',
       icon: Dog,
@@ -90,7 +91,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       onClick: () => onNavigate('patients'),
     },
     {
-      label: 'Citas hoy',
+      label: t('dashboard.todaysAppts'),
       value: kpis.todaysAppointmentsCount,
       change: `${kpis.confirmedToday} confirmadas`,
       icon: Calendar,
@@ -98,7 +99,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       onClick: () => onNavigate('appointments'),
     },
     {
-      label: 'Ingresos del mes',
+      label: t('dashboard.monthlyRevenue'),
       value: formatCurrency(kpis.paidRevenue),
       change: '+12% vs mes anterior',
       icon: DollarSign,
@@ -106,7 +107,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       onClick: () => onNavigate('billing'),
     },
     {
-      label: 'Clientes',
+      label: t('dashboard.clients'),
       value: kpis.clients,
       change: clients && clients.length > 6 ? `+${clients.length - 6} esta semana` : 'Estable',
       icon: Users,
@@ -128,7 +129,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   return (
     <div>
-      <Topbar title="Dashboard" subtitle="Resumen general de la clínica" actionLabel="Nueva cita" onAction={() => onNavigate('appointments')} />
+      <Topbar title="Dashboard" subtitle={t("dashboard.subtitle")} actionLabel={t("topbar.newAppointment")}  onAction={() => onNavigate('appointments')} />
 
       <div className="p-6 space-y-6">
         {/* KPIs */}
@@ -165,7 +166,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
-                <CardTitle className="text-base">Agenda de hoy</CardTitle>
+                <CardTitle className="text-base">{t("dashboard.todaysAgenda")}</CardTitle>
                 <CardDescription className="text-xs">
                   {data.todaysAppointments.length} citas programadas
                 </CardDescription>
@@ -226,7 +227,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
                 Alertas
               </CardTitle>
-              <CardDescription className="text-xs">Requieren atención</CardDescription>
+              <CardDescription className="text-xs">{t("dashboard.requiresAttention")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
               {data.lowStock.length > 0 && (
@@ -328,7 +329,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Evolución de ingresos</CardTitle>
+                  <CardTitle className="text-base">{t("dashboard.revenueEvolution")}</CardTitle>
                   <CardDescription className="text-xs">Últimos 6 meses</CardDescription>
                 </div>
                 <div className="flex items-center gap-1 text-emerald-600">
@@ -371,7 +372,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           {/* Distribución por especie - Pie chart */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Por especie</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.bySpecies")}</CardTitle>
               <CardDescription className="text-xs">Distribución de pacientes</CardDescription>
             </CardHeader>
             <CardContent>
@@ -405,7 +406,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           {/* Citas por día de la semana - Bar chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Citas por día de la semana</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.apptsByWeekday")}</CardTitle>
               <CardDescription className="text-xs">Distribución semanal</CardDescription>
             </CardHeader>
             <CardContent>
@@ -429,7 +430,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           {/* Veterinarios performance */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Actividad del equipo</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.teamActivity")}</CardTitle>
               <CardDescription className="text-xs">Citas hoy por veterinario</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">

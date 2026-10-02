@@ -13,8 +13,15 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { useDashboard } from '@/lib/vet-hooks'
+import { useTranslation, useClinicSettings } from '@/lib/vet-clinic-hooks'
 import { formatCurrency, formatDate, daysUntil } from '@/lib/vet-data'
 import type { ModuleKey } from '@/app/page'
+import type { Language } from '@/lib/i18n'
+
+const DATE_LOCALES: Record<string, string> = {
+  es: 'es-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE',
+  pt: 'pt-PT', 'pt-BR': 'pt-BR', it: 'it-IT', ca: 'ca-ES',
+}
 
 interface TopbarProps {
   title: string
@@ -39,33 +46,34 @@ interface NotificationItem {
 export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNavigate }: TopbarProps) {
   const [open, setOpen] = useState(false)
   const { data: dashboard } = useDashboard()
+  const { t, lang } = useTranslation()
+  const { data: settings } = useClinicSettings()
 
   const today = new Date()
-  const dateStr = today.toLocaleDateString('es-ES', {
+  const locale = DATE_LOCALES[lang] || 'es-ES'
+  const dateStr = today.toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   })
 
-  // Construir notificaciones reales desde los datos del dashboard
+  // Construir notificaciones reales
   const notifications: NotificationItem[] = []
 
   if (dashboard) {
-    // Stock bajo
     dashboard.lowStock?.forEach((item: any) => {
       notifications.push({
         id: `stock-${item.id}`,
         icon: PackageX,
         color: 'text-rose-600',
         bgColor: 'bg-rose-50',
-        title: `Stock bajo: ${item.name}`,
-        description: `Quedan ${item.stock} ${item.unit} (mínimo: ${item.minStock})`,
+        title: `${t('dashboard.lowStock')}: ${item.name}`,
+        description: `${item.stock} ${item.unit} (min: ${item.minStock})`,
         severity: 'critical',
         module: 'inventory',
       })
     })
 
-    // Productos por vencer
     dashboard.expiringSoon?.forEach((item: any) => {
       const days = daysUntil(item.expiryDate!)
       notifications.push({
@@ -73,64 +81,62 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
         icon: Clock,
         color: 'text-amber-600',
         bgColor: 'bg-amber-50',
-        title: `Por vencer: ${item.name}`,
-        description: `Vence en ${days} días (${formatDate(item.expiryDate!)})`,
+        title: `${t('dashboard.expiringSoon')}: ${item.name}`,
+        description: `${days}d (${formatDate(item.expiryDate!)})`,
         severity: 'warning',
         module: 'inventory',
       })
     })
 
-    // Productos vencidos
     dashboard.expired?.forEach((item: any) => {
       notifications.push({
         id: `expired-${item.id}`,
         icon: AlertTriangle,
         color: 'text-rose-700',
         bgColor: 'bg-rose-100',
-        title: `VENCIDO: ${item.name}`,
-        description: `Venció el ${formatDate(item.expiryDate!)}`,
+        title: `${t('inv.expired').toUpperCase()}: ${item.name}`,
+        description: formatDate(item.expiryDate!),
         severity: 'critical',
         module: 'inventory',
       })
     })
 
-    // Facturas pendientes
     if (dashboard.pendingInvoices > 0) {
       notifications.push({
         id: 'inv-pending',
         icon: DollarSign,
         color: 'text-amber-600',
         bgColor: 'bg-amber-50',
-        title: `${dashboard.pendingInvoices} factura(s) pendiente(s)`,
-        description: 'Facturas sin cobrar, revisa el módulo de Facturación',
+        title: `${dashboard.pendingInvoices} ${t('dashboard.pendingPayment')}`,
+        description: t('bill.requiresManagement'),
         severity: 'warning',
         module: 'billing',
       })
     }
 
-    // Facturas vencidas
     if (dashboard.overdueInvoices > 0) {
       notifications.push({
         id: 'inv-overdue',
         icon: DollarSign,
         color: 'text-rose-600',
         bgColor: 'bg-rose-50',
-        title: `${dashboard.overdueInvoices} factura(s) vencida(s)`,
-        description: 'Facturas con pago vencido, requieren gestión',
+        title: `${dashboard.overdueInvoices} ${t('dashboard.overdue')}`,
+        description: t('bill.requiresManagement'),
         severity: 'critical',
         module: 'billing',
       })
     }
 
-    // Pacientes críticos o en tratamiento
     dashboard.criticalPets?.forEach((pet: any) => {
+      const statusKey = pet.status === 'Crítico' ? 'status.critical' : 'status.treatment'
+      const statusLabel = t(statusKey)
       notifications.push({
         id: `pet-${pet.id}`,
         icon: AlertTriangle,
         color: pet.status === 'Crítico' ? 'text-rose-600' : 'text-amber-600',
         bgColor: pet.status === 'Crítico' ? 'bg-rose-50' : 'bg-amber-50',
-        title: `${pet.name} — ${pet.status}`,
-        description: `Paciente ${pet.species} requiere seguimiento`,
+        title: `${pet.name} — ${statusLabel}`,
+        description: t('dashboard.criticalPatients'),
         severity: pet.status === 'Crítico' ? 'critical' : 'warning',
         module: 'patients',
       })
@@ -147,12 +153,13 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
     }
   }
 
+  // Resolver título con override → traducción → fallback
+  const displayTitle = settings?.moduleLabels?.[moduleKey || ''] || t(`sidebar.${moduleKey}`) || title
+
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-6 backdrop-blur-sm">
       <div className="flex flex-col">
-        <h1 className="text-xl font-bold text-foreground">
-          {(moduleKey && dashboard && (dashboard as any).moduleLabels?.[moduleKey]) || title}
-        </h1>
+        <h1 className="text-xl font-bold text-foreground">{displayTitle}</h1>
         {subtitle && (
           <p className="text-[12px] text-muted-foreground">{subtitle}</p>
         )}
@@ -162,12 +169,12 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar paciente, cliente..."
+            placeholder={t('topbar.search')}
             className="h-9 w-64 pl-9"
           />
         </div>
 
-        {/* Notification bell with real data */}
+        {/* Notification bell */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative h-9 w-9">
@@ -185,35 +192,29 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent
-            className="w-80 p-0"
-            align="end"
-            sideOffset={8}
-          >
-            {/* Header */}
+          <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
-                <p className="text-sm font-semibold text-foreground">Notificaciones</p>
+                <p className="text-sm font-semibold text-foreground">{t('topbar.notifications')}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {totalCount > 0
-                    ? `${totalCount} alerta${totalCount > 1 ? 's' : ''} activa${totalCount > 1 ? 's' : ''}`
-                    : 'Todo en orden'}
+                    ? `${totalCount} ${t('topbar.alertsActive')}`
+                    : t('topbar.noNotificationsDesc')}
                 </p>
               </div>
               {criticalCount > 0 && (
                 <Badge variant="destructive" className="text-[10px]">
-                  {criticalCount} crítica{criticalCount > 1 ? 's' : ''}
+                  {criticalCount} {t('topbar.critical')}
                 </Badge>
               )}
             </div>
 
-            {/* List */}
             {notifications.length === 0 ? (
               <div className="py-8 text-center">
                 <Bell className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-                <p className="text-sm text-muted-foreground">No hay notificaciones</p>
+                <p className="text-sm text-muted-foreground">{t('topbar.noNotifications')}</p>
                 <p className="text-[11px] text-muted-foreground/70 mt-1">
-                  El sistema está funcionando sin alertas
+                  {t('topbar.noNotificationsDesc')}
                 </p>
               </div>
             ) : (
@@ -231,15 +232,11 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
                           <Icon className={cn('h-4 w-4', n.color)} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-foreground truncate">
-                            {n.title}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {n.description}
-                          </p>
+                          <p className="text-[13px] font-medium text-foreground truncate">{n.title}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{n.description}</p>
                           {n.module && (
-                            <Badge variant="outline" className="mt-1 text-[9px] capitalize opacity-60">
-                              {n.module}
+                            <Badge variant="outline" className="mt-1 text-[9px] opacity-60">
+                              {t(`sidebar.${n.module}`)}
                             </Badge>
                           )}
                         </div>
@@ -253,19 +250,11 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
               </ScrollArea>
             )}
 
-            {/* Footer */}
             {notifications.length > 0 && (
               <div className="border-t border-border px-4 py-2 flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">
-                  Click en una alerta para ir al módulo
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-[11px]"
-                  onClick={() => setOpen(false)}
-                >
-                  <X className="h-3 w-3" /> Cerrar
+                <span className="text-[11px] text-muted-foreground">{t('topbar.clickToNavigate')}</span>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setOpen(false)}>
+                  <X className="h-3 w-3" /> {t('common.close')}
                 </Button>
               </div>
             )}
@@ -274,11 +263,13 @@ export function Topbar({ title, moduleKey, subtitle, actionLabel, onAction, onNa
 
         <div className="hidden lg:flex flex-col items-end text-right">
           <span className="text-[12px] font-medium text-foreground capitalize">{dateStr}</span>
-          <span className="text-[11px] text-muted-foreground">Clínica VetCare Centro</span>
+          <span className="text-[11px] text-muted-foreground">
+            {settings?.brandName || 'VetCare'} · {settings?.brandSubtitle || t('sidebar.gestionClinica')}
+          </span>
         </div>
 
         {actionLabel && (
-          <Button onClick={onAction} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={onAction} className="text-white" style={{ background: settings?.primaryColor || '#10b981' }}>
             <Plus className="h-4 w-4" />
             {actionLabel}
           </Button>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState, useMemo } from 'react'
 import {
   Search,
@@ -47,7 +48,7 @@ const PAYMENT_ICONS: Record<string, any> = {
 }
 
 export function BillingView() {
-  const { data: invoices = [], isLoading } = useInvoices()
+  const { data: invoices = [], isLoading } = useInvoices(); const { t } = useTranslation()
   const { data: clients = [] } = useClients()
   const { data: pets = [] } = usePets()
   const [search, setSearch] = useState('')
@@ -100,7 +101,7 @@ export function BillingView() {
 
   return (
     <div>
-      <Topbar moduleKey="billing" title="Facturación" subtitle="Gestión de facturas y cobros" actionLabel="Nueva factura" onAction={() => setShowNewInvoice(true)} />
+      <Topbar moduleKey="billing" title="Facturación" subtitle={t("bill.subtitle")} actionLabel="Nueva factura" onAction={() => setShowNewInvoice(true)} />
 
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

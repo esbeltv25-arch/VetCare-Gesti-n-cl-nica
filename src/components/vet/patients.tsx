@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState, useMemo } from 'react'
 import {
   Dog,
@@ -59,7 +60,7 @@ const SPECIES_FILTERS = ['Todos', 'Perro', 'Gato', 'Conejo', 'Ave'] as const
 const STATUS_FILTERS = ['Todos', 'Sano', 'En tratamiento', 'Crítico', 'En observación'] as const
 
 export function PatientsView() {
-  const { data: pets = [], isLoading } = usePets()
+  const { data: pets = [], isLoading } = usePets(); const { t } = useTranslation()
   const { data: clients = [] } = useClients()
   const [search, setSearch] = useState('')
   const [speciesFilter, setSpeciesFilter] = useState<typeof SPECIES_FILTERS[number]>('Todos')
@@ -95,7 +96,7 @@ export function PatientsView() {
 
   return (
     <div>
-      <Topbar moduleKey="patients" title="Pacientes" subtitle={`${pets.length} mascotas registradas`} actionLabel="Nuevo paciente" onAction={() => setShowNewPet(true)} />
+      <Topbar moduleKey="patients" title="Pacientes" subtitle={`${pets.length} ${t("patients.registered")}`} actionLabel="Nuevo paciente" onAction={() => setShowNewPet(true)} />
 
       <div className="p-6 space-y-4">
         <Card>

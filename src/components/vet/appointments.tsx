@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState, useMemo } from 'react'
 import {
   DndContext,
@@ -138,7 +139,7 @@ export function AppointmentsView() {
 
   return (
     <div>
-      <Topbar moduleKey="appointments" title="Agenda" subtitle="Arrastra citas para reprogramar" actionLabel="Nuevo turno" onAction={() => setShowNewAppointment(true)} />
+      <Topbar moduleKey="appointments" title="Agenda" subtitle={t("appointments.subtitle")} actionLabel="Nuevo turno" onAction={() => setShowNewAppointment(true)} />
 
       <div className="p-6 space-y-4">
         {/* View toggle + navigation */}

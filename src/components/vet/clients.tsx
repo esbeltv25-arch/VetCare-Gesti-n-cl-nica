@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@/lib/vet-clinic-hooks'
 import { useState, useMemo } from 'react'
 import {
   Search,
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/dialog'
 
 export function ClientsView() {
-  const { data: clients = [], isLoading } = useClients()
+  const { data: clients = [], isLoading } = useClients(); const { t } = useTranslation()
   const { data: pets = [] } = usePets()
   const { data: invoices = [] } = useInvoices()
   const [search, setSearch] = useState('')
@@ -43,7 +44,7 @@ export function ClientsView() {
 
   return (
     <div>
-      <Topbar moduleKey="clients" title="Clientes" subtitle={`${clients.length} dueños registrados`} actionLabel="Nuevo cliente" onAction={() => setShowNewClient(true)} />
+      <Topbar moduleKey="clients" title="Clientes" subtitle={`${clients.length} ${t("clients.registered")}`} actionLabel="Nuevo cliente" onAction={() => setShowNewClient(true)} />
 
       <div className="p-6 space-y-4">
         <Card>
