@@ -1,0 +1,37 @@
+# Render.com configuration
+# Docs: https://render.com/docs/blueprint-spec
+# Esto permite deploy con 1 click desde el README (botón "Deploy to Render")
+
+services:
+  - type: web
+    name: vetcare
+    runtime: node
+    plan: free
+    branch: main
+    repo: https://github.com/esbeltv25-arch/VetCare-Gesti-n-cl-nica
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Te pedirá el valor en el dashboard al hacer deploy
+      - key: NODE_VERSION
+        value: "20"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+
+  - type: background-worker
+    name: vetcare-seed
+    runtime: node
+    plan: free
+    branch: main
+    repo: https://github.com/esbeltv25-arch/VetCare-Gesti-n-cl-nica
+    buildCommand: npm install && npx prisma generate
+    startCommand: npx prisma db push && node scripts/seed-vet.ts && node scripts/seed-hospitalizations.ts
+    autoDeploy: false  # Solo se ejecuta manualmente para sembrar la BD
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
